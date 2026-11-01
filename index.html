@@ -214,7 +214,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ice);outline-of
       <p class="result">도달 스테이지 <b id="overStage">1</b></p>
       <button id="btnSubmitOver" class="ghost gold" type="button" hidden>랭킹에 기록 올리기</button>
       <button id="btnCont" class="cta" type="button" hidden>이 스테이지부터 다시</button>
-      <p id="contNote" class="note" hidden>모은 능력은 그대로 가져가고, 점수는 0부터 다시 시작해요.</p>
+      <p id="contNote" class="note" hidden>보스 능력은 사라지고 점수는 0부터 다시 시작해요. 카드 수집 기록은 남아요.</p>
       <button id="btnRetry" class="cta" type="button">처음부터 다시</button>
       <button id="btnRepick" class="ghost" type="button">기체 바꿔서 다시</button>
       <button id="btnHome" class="ghost" type="button">처음 화면으로</button>
@@ -2224,7 +2224,7 @@ let overAt=0;
 function startGame(stage=1){unlockAudio();MUSIC.paused=false;newGame(stage);state='play';show(null);sfx('start');}
 function gameOver(){
   state='over';overAt=performance.now();P.dead=-1;saveHi(hi);sfx('over');stopMusic();
-  lastRun={score:G.score,stage:G.stage,from:'over',sent:false,abil:{...P.abil}};
+  lastRun={score:G.score,stage:G.stage,from:'over',sent:false};
   $('overScore').textContent=pad(G.score,7);$('overHi').textContent=pad(hi,7);
   $('overStage').textContent=G.stage+' / '+LAST;$('overNew').hidden=!(G.newHi&&G.score>0);
   const canCont=G.stage>1;
@@ -2290,8 +2290,8 @@ $('btnAgain').addEventListener('click',()=>startGame(1));
 $('btnCont').addEventListener('click',()=>{
   if(!lastRun)return startGame(1);
   startGame(lastRun.stage);
-  // Powers copied from rare foes come along; the shot starts at level 3 like a normal stage start.
-  Object.assign(P.abil,lastRun.abil||{});for(const k in P.abil)P.abT[k]=60;P.power=Math.max(P.power,3);
+  // Copied powers are lost on game over (only the card book remains); the shot starts at level 3 like a normal stage start.
+  P.power=Math.max(P.power,3);
 });
 $('btnResume').addEventListener('click',resumeGame);
 $('btnQuit').addEventListener('click',()=>{saveHi(hi);toTitle();});
