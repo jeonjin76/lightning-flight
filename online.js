@@ -198,7 +198,7 @@ async function openLadder(){
     const li=el('li',{className:r.id===me.id?'me':''},
       el('span',{className:'rk',textContent:String(r.rank)}),
       el('span',{className:'who'},el('span',{className:'nick',textContent:r.nick}),el('span',{className:'meta',textContent:r.w+'승 '+r.l+'패'})),
-      el('span',{className:'sc',textContent:String(r.best||0).padStart(7,'0')}));
+      el('span',{className:'sc',textContent:String(r.best||0).padStart(7,'0')},el('small',{textContent:'STAGE '+(r.bestStage||0)})));
     if(mine&&r.rank<mine.rank){
       const b=el('button',{className:'duel',type:'button',textContent:busy.has(r.id)?'신청함':'대결',disabled:!!cd||busy.has(r.id)});
       b.addEventListener('click',()=>challenge(r,b));li.append(b);
