@@ -213,10 +213,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ice);outline-of
       <p class="result">최고 <b id="overHi">0</b></p>
       <p class="result">도달 스테이지 <b id="overStage">1</b></p>
       <button id="btnSubmitOver" class="ghost gold" type="button" hidden>랭킹에 기록 올리기</button>
+      <button id="btnCont" class="cta" type="button" hidden>이 스테이지부터 다시</button>
+      <p id="contNote" class="note" hidden>모은 능력은 그대로 가져가고, 점수는 0부터 다시 시작해요.</p>
       <button id="btnRetry" class="cta" type="button">처음부터 다시</button>
       <button id="btnRepick" class="ghost" type="button">기체 바꿔서 다시</button>
-      <button id="btnCont" class="ghost strong" type="button" hidden>이어하기</button>
-      <p id="contNote" class="note" hidden>이어하면 점수는 0부터 다시 시작해요.</p>
       <button id="btnHome" class="ghost" type="button">처음 화면으로</button>
     </section>
 
@@ -1565,7 +1565,7 @@ function spawnBoss(mid=false){
     if(n>=25)pats.push(pats.includes('ring')?'rain':'ring');
     def={name:'MID BOSS',big:false,pats,hp:Math.round(80+14*n)};spr={n:c,hot:midAngelCanvas(n,C.volt),w:whiteOf(c),core:c.core,eyes:[]};w=c.width;h=c.height;
   }else{def=BOSSES[n-1];spr=makeBoss(def);[w,h]=BOSS_SIZE[def.shape];}
-  boss={def,spr,mid,uq:def.uq||null,hw:w*.42,hh:h*.42,ty:26+h/2,x:W/2,y:-h/2,hp:def.hp,max:def.hp,t:0,mt:0,mode:'sway',pat:0,patT:0,flash:0,state:'enter',ang:0,aim:0,dying:0,stage:1};
+  boss={def,spr,mid,uq:def.uq||null,tp:0,tpT:0,hw:w*.42,hh:h*.42,ty:26+h/2,x:W/2,y:-h/2,hp:def.hp,max:def.hp,t:0,mt:0,mode:'sway',pat:0,patT:0,flash:0,state:'enter',ang:0,aim:0,dying:0,stage:1};
 }
 function nextMode(b){
   const modes=['sway','eight'];
@@ -1617,6 +1617,20 @@ function updateBoss(){
   const ratio=b.hp/b.max,newStage=ratio<.25&&b.def.big?3:ratio<.5?2:1;
   if(newStage>b.stage){b.stage=newStage;G.flash=10;G.shake=6;sfx('rage');pop(b.x,b.y+b.hh+6,'RAGE',C.hot);}
   const p2=b.stage>=2;
+  // Rare foes blink away every few seconds: fade out, jump to a new spot, fade back in (no attacks meanwhile).
+  if(b.uq){
+    if(b.tp>0){
+      b.tp--;
+      if(b.tp===14){
+        explode(b.x,b.y,10,false);
+        let nx;do nx=rand(b.hw+6,W-b.hw-6);while(!P.dead&&Math.abs(nx-P.x)<24&&Math.random()<.8);
+        b.x=nx;b.y=rand(b.ty,Math.min(H*.42,H-b.hh-110));b.mode='roam';b.mt=2;b.goal={x:b.x,y:b.y};
+        parts.push({ring:true,x:b.x,y:b.y,r:2,max:Math.max(b.hw,b.hh)+10,life:99,col:'#ff3d3d'});
+      }
+      return;
+    }
+    if(++b.tpT>=(p2?170:230)){b.tpT=0;b.tp=28;sfx('blink');}
+  }
   moveBoss(b,p2);
   if(++b.patT>320){b.patT=0;b.pat=(b.pat+1)%b.def.pats.length;nextMode(b);}
   if(b.patT<40||P.dead||b.charging)return;
@@ -1951,6 +1965,7 @@ function render(){
     if(b.uq&&b.state!=='dying'){const p=(Math.sin(b.t*.1)+1)/2;ctx.globalCompositeOperation='lighter';ring(b.x,b.y,Math.max(b.hw,b.hh)+4+p*3,rgba('#ff2a3a',.12+.15*p));ctx.globalCompositeOperation='source-over';}
     const img=b.flash?b.spr.w:(b.stage>=2&&(f>>3)&1?b.spr.hot:b.spr.n);
     if(!(b.state==='dying'&&(b.dying>>2)&1)){
+      if(b.tp>0)ctx.globalAlpha=Math.max(.08,Math.abs(b.tp-14)/14);
       draw(img,b.x,b.y);
       // Floating halo above the body (slowly turning) and a pulsing glow around the core.
       const hx=b.x,hy=Math.round(b.y-b.hh-(b.mid?4:6)),rx=Math.max(7,b.hw*.42),N=b.mid?12:18;
@@ -1967,6 +1982,7 @@ function render(){
       ctx.globalCompositeOperation='source-over';
       for(let i=0;i<b.spr.eyes.length;i++){const[ex,ey]=b.spr.eyes[i];if((b.t+i*37)%170<7)continue;ctx.fillStyle=b.stage>=2?C.volt:'#ff6070';ctx.fillRect(ox+ex,oy+ey,1,1);}
       if(b.def.shape==='chronos'){const cx=ox+kx,cy=oy+ky-5;line(ctx,cx,cy,cx+Math.cos(b.t*.05)*19,cy+Math.sin(b.t*.05)*19,2,BONE);line(ctx,cx,cy,cx+Math.cos(b.t*.008)*12,cy+Math.sin(b.t*.008)*12,2,BONE2);}
+      ctx.globalAlpha=1;
     }
   }
   for(const e of enemies)if(!(e.delay&&e.t<e.delay))drawEnemy(e,f);
@@ -2208,14 +2224,16 @@ let overAt=0;
 function startGame(stage=1){unlockAudio();MUSIC.paused=false;newGame(stage);state='play';show(null);sfx('start');}
 function gameOver(){
   state='over';overAt=performance.now();P.dead=-1;saveHi(hi);sfx('over');stopMusic();
-  lastRun={score:G.score,stage:G.stage,from:'over',sent:false};
+  lastRun={score:G.score,stage:G.stage,from:'over',sent:false,abil:{...P.abil}};
   $('overScore').textContent=pad(G.score,7);$('overHi').textContent=pad(hi,7);
   $('overStage').textContent=G.stage+' / '+LAST;$('overNew').hidden=!(G.newHi&&G.score>0);
   const canCont=G.stage>1;
+  // Restarting from the stage you died on is the main choice; the retry button turns into a plain one then.
   $('btnCont').hidden=$('contNote').hidden=!canCont;
-  $('btnCont').textContent='이어하기 · '+G.stage+'탄부터';
+  $('btnCont').textContent=G.stage+'탄부터 다시 시작';
+  $('btnRetry').className=canCont?'ghost':'cta';
   updateSubmitButtons();
-  show('over');setTimeout(()=>$('btnRetry').focus(),50);
+  show('over');setTimeout(()=>$(canCont?'btnCont':'btnRetry').focus(),50);
 }
 function ending(){
   const bonus=G.lives*10000;addScore(bonus);
@@ -2269,7 +2287,12 @@ $('btnSelBack').addEventListener('click',()=>{show('title');$('btnStart').focus(
 $('btnRetry').addEventListener('click',()=>startGame(1));
 $('btnRepick').addEventListener('click',openSelect);
 $('btnAgain').addEventListener('click',()=>startGame(1));
-$('btnCont').addEventListener('click',()=>startGame(lastRun?lastRun.stage:1));
+$('btnCont').addEventListener('click',()=>{
+  if(!lastRun)return startGame(1);
+  startGame(lastRun.stage);
+  // Powers copied from rare foes come along; the shot starts at level 3 like a normal stage start.
+  Object.assign(P.abil,lastRun.abil||{});for(const k in P.abil)P.abT[k]=60;P.power=Math.max(P.power,3);
+});
 $('btnResume').addEventListener('click',resumeGame);
 $('btnQuit').addEventListener('click',()=>{saveHi(hi);toTitle();});
 $('btnHome').addEventListener('click',toTitle);
@@ -2311,7 +2334,7 @@ addEventListener('keydown',e=>{
   }else if(state==='title'){
     if(k==='Enter'&&!onBtn&&!scr.title.hidden)openSelect();
   }else if(state==='over'){
-    if((k==='Enter'||k==='Space')&&performance.now()-overAt>900&&!onBtn&&(!scr.over.hidden||!scr.end.hidden)){e.preventDefault();startGame(1);}
+    if((k==='Enter'||k==='Space')&&performance.now()-overAt>900&&!onBtn&&(!scr.over.hidden||!scr.end.hidden)){e.preventDefault();if(!scr.over.hidden&&!$('btnCont').hidden)$('btnCont').click();else startGame(1);}
   }
 });
 addEventListener('keyup',e=>{keys[e.code]=false;});
