@@ -99,16 +99,16 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ice);outline-of
 .hud-btn.card.empty{opacity:.35}
 .chip.c{background:#7a3dd9}
 .hud-btn.pause{left:3cqw;font-family:var(--font-pixel);font-size:3cqw}
-.picks{display:grid;grid-template-columns:1fr 1fr;gap:3cqw;width:100%}
-.pick{display:flex;flex-direction:column;align-items:center;gap:1.4cqw;padding:3cqw 2cqw;background:var(--field);color:var(--ink);border:0;border-radius:0;box-shadow:inset 0 0 0 2px var(--line);font-family:var(--font-body);cursor:pointer}
+.picks{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2cqw;width:100%}
+.pick{display:flex;flex-direction:column;align-items:center;gap:1.2cqw;padding:2.4cqw 1cqw;background:var(--field);color:var(--ink);border:0;border-radius:0;box-shadow:inset 0 0 0 2px var(--line);font-family:var(--font-body);cursor:pointer}
 .pick:hover,.pick.on{box-shadow:inset 0 0 0 2px var(--volt)}
 .pick canvas{image-rendering:pixelated;image-rendering:crisp-edges}
-.pick .pv{width:34cqw;height:30cqw}
+.pick .pv{width:22cqw;height:29.76cqw}
 .pick .pr{display:flex;align-items:flex-end;gap:2cqw}
-.pick .pb{width:12.75cqw;height:15.75cqw}
-.pick .ps{width:9.75cqw;height:9.75cqw}
-.pick b{font-family:var(--font-display);font-weight:400;font-size:5.4cqw;color:var(--volt)}
-.pick span{font-size:3.4cqw;color:var(--dim);line-height:1.3}
+.pick .pb{width:10.2cqw;height:12.6cqw}
+.pick .ps{width:7.8cqw;height:7.8cqw}
+.pick b{font-family:var(--font-display);font-weight:400;font-size:4.4cqw;color:var(--volt);white-space:nowrap}
+.pick span{font-size:3cqw;color:var(--dim);line-height:1.3}
 .chip.l{background:#2ea860}
 .collect{gap:1.8cqw}
 .collect h2{font-size:9cqw}
@@ -142,12 +142,16 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ice);outline-of
       <h2>기체 선택</h2>
       <div class="picks">
         <button class="pick" type="button" data-plane="shiba">
-          <canvas class="pv" width="34" height="30"></canvas><span class="pr"><canvas class="pb" width="17" height="21"></canvas><canvas class="ps" width="13" height="13"></canvas></span>
-          <b>시바 번개호</b><span>일본 · 시바견<br>앞으로 곧게 쏘는 레이저<br>빠른 이동</span>
+          <canvas class="pv" width="34" height="46"></canvas><span class="pr"><canvas class="pb" width="17" height="21"></canvas><canvas class="ps" width="13" height="13"></canvas></span>
+          <b>시바 번개호</b><span>일본 · 시바견<br>곧게 쏘는 레이저<br>빠른 이동</span>
         </button>
         <button class="pick" type="button" data-plane="jindo">
-          <canvas class="pv" width="34" height="30"></canvas><span class="pr"><canvas class="pb" width="17" height="21"></canvas><canvas class="ps" width="13" height="13"></canvas></span>
-          <b>진돗개 태극호</b><span>대한민국 · 진돗개<br>넓게 퍼지는 태극 구슬탄<br>조금 느린 이동</span>
+          <canvas class="pv" width="34" height="46"></canvas><span class="pr"><canvas class="pb" width="17" height="21"></canvas><canvas class="ps" width="13" height="13"></canvas></span>
+          <b>진돗개 태극호</b><span>대한민국 · 진돗개<br>넓게 퍼지는 구슬탄<br>조금 느린 이동</span>
+        </button>
+        <button class="pick" type="button" data-plane="cat">
+          <canvas class="pv" width="34" height="46"></canvas><span class="pr"><canvas class="pb" width="17" height="21"></canvas><canvas class="ps" width="13" height="13"></canvas></span>
+          <b>고양이 별빛호</b><span>프랑스 · 회색 고양이<br>춤추듯 꼬이는 별빛탄<br>가장 빠른 이동</span>
         </button>
       </div>
       <button id="btnSelBack" class="ghost" type="button">돌아가기</button>
@@ -440,24 +444,41 @@ const PLAYER_HALF=['.....w','.....w','....wc','....wc','...wcc','...www','..bwww
 const PPAL={w:'#e8ecff',c:C.ice,b:'#3d6bff',r:C.hot,y:C.volt,o:C.orange};
 // Jindo plane: round red/blue wings with twin engines on the wing tips (taegeuk colours).
 const JINDO_HALF=['......w','.....wc','.....wc','....wcc','.r..wcc','rrr.www','rRrrwww','rRRrrww','.rRRrbw','..b.bbw','..B..Bw'];
+const CAT_HALF=['...l...','..lPl..','..lPPll','..lPwwc','.lPwwcc','lPPwwwc','lPPPwww','lPpPPww','.lppPPw','..l.lPP','.....lP'];
+const CPAL={l:'#7a3d9a',P:'#ff7ad9',p:'#ffd0f0',w:'#fff0fa',c:'#b48cff',y:C.volt,o:C.orange};
 const JPAL={w:'#f3f0ff',c:C.ice,r:'#ff4d6d',R:'#a8243c',b:'#3d6bff',B:'#1e3a9a',y:C.volt,o:C.orange};
-// Dog pilot in a teal hoodie with magenta trim and an orange backpack, left half (mirrored).
+// Dog pilots wear a teal hoodie with magenta trim and an orange backpack; the cat wears a striped
+// breton shirt with a red scarf and a bow on one ear. Left halves, mirrored by sym().
 // k outline, f fur, F fur shade, i inner ear, c cream muzzle, e eye, n nose, m mouth,
 // t hoodie, u hoodie light, T hoodie shade, p magenta trim, P string tip, o backpack strap, K pants, s shoe.
 const DOG_HEAD=['..k......','.kik.....','.kiik....','kfiiFkkkk','kfffFFFFF','kffffffff','kffffefff',
   'kfcccccnn','kcccccmcc','.kcccccmm','..kkkcccc'];
 const DOG_BODY=['.ttkkkkkk','tottuuupt','toTuuuupt','tTtuuutPt','fTttuuttt','fTtttttTt','.pppppppp',
   '...KKKK..','...KKKK..','..ssss...'];
-const DOG_BLINK_HEAD=DOG_HEAD.map((r,i)=>i===6?'kfffkkfff':r);
 const DOG_PAL={
   shiba:{k:'#3a2418',f:'#b0703e',F:'#8a5430',i:'#e8b48a',c:'#f2d6ae'},
   jindo:{k:'#5a4a3a',f:'#f2ead8',F:'#d8ccb4',i:'#ffc2c8',c:'#ffffff'},
 };
 const DOG_COMMON={e:'#1a1030',n:'#1a1030',m:'#3a2418',t:'#1f7f86',u:'#2aa9a8',T:'#155a62',p:'#e040c0',P:'#ff9be6',o:'#ef6a2a',K:'#1a1626',s:'#3a2a2a'};
-// Phone in the left hand, drawn after mirroring so only one hand holds it.
+// Cat: h blush, g gold eye, w eye shine / white stripe, p pink nose, W whisker, r scarf, R scarf shade, b navy stripe, N shorts.
+const CAT_HEAD=['.k.......','.kk......','.kik.....','kiikkkkkk','kffffffff','kffffffff','kfwgeffff',
+  'kfgggffff','Wfhhfccpp','kWfcccccm','.kkcccmcc'];
+const CAT_BODY=['..krrrrrr','.kwwwwrRr','fbbbbbbRb','fwwwwwwww','fbbbbbbbb','.wwwwwwww','.bbbbbbbb',
+  '...NNNN..','...NNNN..','..ffff...'];
+const CAT_PAL={h:'#ff9ec4',k:'#3a3550',f:'#a8b0c8',i:'#ffb0c8',c:'#eef0f6',w:'#ffffff',g:'#ffc93d',e:'#1a1030',p:'#ff7aa8',
+  m:'#3a3550',W:'#eef0f6',r:'#e83a4a',R:'#a01828',b:'#2a3a7a',N:'#1a2048'};
+// Phone in the left hand / bow on the left ear, drawn after mirroring so only one side has it.
 function withPhone(c,x,y){const g=c.getContext('2d');g.fillStyle='#1a1030';g.fillRect(x,y,3,4);g.fillStyle=C.ice;g.fillRect(x+1,y+1,1,2);return c;}
-function pilotBody(kind){return withPhone(sprite(sym([...DOG_HEAD,...DOG_BODY]),{...DOG_COMMON,...DOG_PAL[kind]}),0,14);}
+function withBow(c,x,y){const g=c.getContext('2d');g.fillStyle='#e83a4a';g.fillRect(x,y,1,3);g.fillRect(x+1,y+1,1,1);g.fillRect(x+2,y,1,3);g.fillStyle='#ff9bb0';g.fillRect(x,y,1,1);g.fillRect(x+2,y,1,1);return c;}
+const PILOT={
+  shiba:{head:DOG_HEAD,blink:DOG_HEAD.map((r,i)=>i===6?'kfffkkfff':r),body:DOG_BODY,pal:{...DOG_COMMON,...DOG_PAL.shiba},bg:'#2a1a3e',flag:flagJapan,extra:null,hand:true},
+  jindo:{head:DOG_HEAD,blink:DOG_HEAD.map((r,i)=>i===6?'kfffkkfff':r),body:DOG_BODY,pal:{...DOG_COMMON,...DOG_PAL.jindo},bg:'#14224a',flag:flagKorea,extra:null,hand:true},
+  cat:{head:CAT_HEAD,blink:CAT_HEAD.map((r,i)=>i===6?'kffffffff':i===7?'kfkkkffff':r),body:CAT_BODY,pal:CAT_PAL,bg:'#2a1438',flag:flagFrance,extra:c=>withBow(c,3,2),hand:false},
+};
+function pilotSprite(kind,rows){const p=PILOT[kind],c=sprite(sym(rows),p.pal);if(p.extra)p.extra(c);return c;}
+function pilotBody(kind){const p=PILOT[kind],c=pilotSprite(kind,[...p.head,...p.body]);return p.hand?withPhone(c,0,14):c;}
 function flagJapan(g,x,y){g.fillStyle='#1a1030';g.fillRect(x-1,y-1,17,12);g.fillStyle='#ffffff';g.fillRect(x,y,15,10);g.fillStyle='#d7263d';[3,5,7,7,7,5,3].forEach((w,i)=>g.fillRect(x+7-(w>>1),y+2+i,w,1));}
+function flagFrance(g,x,y){g.fillStyle='#1a1030';g.fillRect(x-1,y-1,17,12);g.fillStyle='#1e4fb0';g.fillRect(x,y,5,10);g.fillStyle='#ffffff';g.fillRect(x+5,y,5,10);g.fillStyle='#d7263d';g.fillRect(x+10,y,5,10);}
 function flagKorea(g,x,y){
   g.fillStyle='#1a1030';g.fillRect(x-1,y-1,17,12);g.fillStyle='#ffffff';g.fillRect(x,y,15,10);
   const cx=x+7,cy=y+5;
@@ -473,13 +494,15 @@ function flagKorea(g,x,y){
   const tri=(tx,ty,bars)=>bars.forEach((b,i)=>{if(b)g.fillRect(tx,ty+i*2,3,1);else{g.fillRect(tx,ty+i*2,1,1);g.fillRect(tx+2,ty+i*2,1,1);}});
   tri(x+1,y+1,[1,1,1]);tri(x+11,y+1,[0,1,0]);tri(x+1,y+5,[1,0,1]);tri(x+11,y+5,[0,0,0]);
 }
+// Portrait: the pilot fills the frame (drawn 2x, chest up) with the country flag in a band below.
 function portrait(kind,blink){
-  const c=mk(34,30),g=c.getContext('2d');
-  g.fillStyle='#ffd23f';g.fillRect(0,0,34,30);g.fillStyle='#10132e';g.fillRect(1,1,32,28);
-  g.fillStyle=kind==='shiba'?'#2a1a3e':'#14224a';g.fillRect(2,2,30,26);
-  g.fillStyle='rgba(255,255,255,.08)';g.fillRect(2,2,30,8);
-  g.drawImage(sprite(sym([...(blink?DOG_BLINK_HEAD:DOG_HEAD),...DOG_BODY.slice(0,6)]),{...DOG_COMMON,...DOG_PAL[kind]}),2,12);
-  (kind==='shiba'?flagJapan:flagKorea)(g,18,3);
+  const p=PILOT[kind],c=mk(34,46),g=c.getContext('2d');
+  g.fillStyle='#ffd23f';g.fillRect(0,0,34,46);g.fillStyle=p.bg;g.fillRect(1,1,32,32);
+  g.fillStyle='rgba(255,255,255,.08)';g.fillRect(1,1,32,10);
+  g.save();g.beginPath();g.rect(1,1,32,32);g.clip();g.imageSmoothingEnabled=false;
+  g.drawImage(pilotSprite(kind,[...(blink?p.blink:p.head),...p.body.slice(0,5)]),0,2,34,32);g.restore();
+  g.fillStyle='#10132e';g.fillRect(1,33,32,12);
+  p.flag(g,9,34);
   return c;
 }
 const PLANES={
@@ -489,6 +512,10 @@ const PLANES={
   jindo:{name:'진돗개 태극호',fan:true,speed:2.1,cd:7,
     a:sprite(sym([...JINDO_HALF,'..y....','..o....']),JPAL),b:sprite(sym([...JINDO_HALF,'..y....','.......']),JPAL),
     life:sprite(sym(['..w','.rw','rrw','r.b']),JPAL)},
+  // Cat plane: cat-ear fins up front, pink and lavender; fires twin star streams that weave around each other.
+  cat:{name:'고양이 별빛호',wave:true,speed:2.5,cd:6,
+    a:sprite(sym([...CAT_HALF,'.....y.','.....o.']),CPAL),b:sprite(sym([...CAT_HALF,'.....y.','.......']),CPAL),
+    life:sprite(sym(['.P.','.PP','lPw','.lP']),CPAL)},
 };
 for(const k in PLANES){PLANES[k].face=portrait(k,false);PLANES[k].blink=portrait(k,true);PLANES[k].body=pilotBody(k);}
 const PLANE_KEY='lightning-flight-plane';
@@ -1084,6 +1111,7 @@ const SFX={
   // The player's own fire plays all the time, so it is kept well below every other sound.
   shot:()=>{tone(1100,.05,'triangle',.04,700);tone(2200,.03,'sine',.012,1400);},
   shotB:()=>{tone(520,.07,'sine',.045,980);tone(1040,.04,'triangle',.012,1600);},
+  shotC:()=>{tone(1320,.06,'sine',.04,1760);tone(2640,.03,'triangle',.01,3000);},
   abil:()=>{tone(880,.08,'triangle',.05,1500);tone(1320,.07,'sine',.03,2000,.03);},
   // Enemy fire: each bullet look has its own sound (throttled so big volleys stay readable).
   eorb:()=>{tone(700,.09,'square',.05,240);},
@@ -1668,8 +1696,15 @@ const PATTERNS_FAN=[null,
   [[-2,-2],[2,2],[-3,-8],[3,8],[-5,-15],[5,15],[-6,-23],[6,23],[-7,-31],[7,31],[-8,-40],[8,40]],
 ];
 const SHOT_COL=[null,[C.cream,C.white],[C.cream,C.white],[C.volt,C.white],['#7dffb0',C.white],[C.ice,C.white],['#ff4dd8',C.white]];
+// The cat plane fires weaving star streams: [x offset, sway width] per stream; each swaying stream is a twin pair.
+const PATTERNS_WAVE=[null,[[0,5]],[[0,7]],[[0,7],[0,0]],[[-6,6],[6,6]],[[-6,7],[6,7],[0,0]],[[-9,7],[9,7],[0,10]]];
 function firePlayer(){
-  const fan=PL().fan,sp=fan?5:6;
+  const pl=PL(),fan=pl.fan,sp=fan?5:6;
+  if(pl.wave){
+    PATTERNS_WAVE[P.power].forEach(([dx,amp])=>{for(const ph of amp?[0,Math.PI]:[0])pBul.push({x:P.x+dx,x0:P.x+dx,y:P.y-6,vx:0,vy:-5.6,wave:amp,ph,wt:0,c:ph?1:0});});
+    if((G.fireN++&1)===0)sfx('shotC');
+    return;
+  }
   (fan?PATTERNS_FAN:PATTERNS)[P.power].forEach(([dx,deg],i)=>{const a=deg*Math.PI/180;pBul.push({x:P.x+dx,y:P.y-6,vx:Math.sin(a)*sp,vy:-Math.cos(a)*sp,c:i&1});});
   if((G.fireN++&1)===0)sfx(fan?'shotB':'shot');
 }
@@ -1857,6 +1892,7 @@ function update(){
 
   for(const b of pBul){
     if(b.home)steerHome(b);
+    if(b.wave!==undefined){b.wt++;b.x=b.x0+Math.sin(b.wt*.28+b.ph)*b.wave;}
     b.x+=b.vx;b.y+=b.vy;
     const d=b.dmg||1;
     for(const e of enemies){
@@ -1994,7 +2030,14 @@ function render(){
   for(const e of enemies)if(!(e.delay&&e.t<e.delay))drawEnemy(e,f);
 
   const pl=PL();
-  if(pl.fan){
+  if(pl.wave){
+    // Star streams: pink and lavender sparkles with a white heart, bigger from level 5.
+    const s=P.power>=5?1:0;
+    ctx.globalCompositeOperation='lighter';
+    for(const b of pBul)if(!b.ab){ctx.fillStyle=b.c?'rgba(180,140,255,.35)':'rgba(255,122,217,.35)';ctx.fillRect(Math.round(b.x)-3-s,Math.round(b.y)-3-s,7+s*2,7+s*2);}
+    ctx.globalCompositeOperation='source-over';
+    for(const b of pBul)if(!b.ab){const x=Math.round(b.x),y=Math.round(b.y);ctx.fillStyle=b.c?'#b48cff':'#ff7ad9';ctx.fillRect(x-2-s,y,5+s*2,1);ctx.fillRect(x,y-2-s,1,5+s*2);ctx.fillRect(x-1,y-1,3,3);ctx.fillStyle=C.white;ctx.fillRect(x,y,1,1);}
+  }else if(pl.fan){
     // Taegeuk orbs: alternating red and blue balls with a white centre; bigger at level 5+.
     const s=P.power>=5?2:1;
     ctx.globalCompositeOperation='lighter';
@@ -2070,7 +2113,7 @@ function render(){
   // Copied powers: one icon each, with a pip per level.
   let ai=0;for(const k in P.abil){const x=4+ai*9;ctx.drawImage(ABIL[k].icon,x,27);ctx.fillStyle=ABIL[k].col;for(let j=0;j<P.abil[k];j++)ctx.fillRect(x+j*2+1,35,1,1);ai++;}
   // Pilot portrait above the pause button; blinks now and then, winces while the plane is down.
-  ctx.globalAlpha=.92;ctx.drawImage(P.dead>0||f%200<8?pl.blink:pl.face,7,243);ctx.globalAlpha=1;
+  ctx.globalAlpha=.92;ctx.drawImage(P.dead>0||f%200<8?pl.blink:pl.face,7,229);ctx.globalAlpha=1;
 
   if(boss&&boss.y>0){
     const w=180,x=(W-w)/2;ctx.fillStyle='#2a2f63';ctx.fillRect(x-1,19,w+2,5);
@@ -2405,6 +2448,6 @@ initRank();
 requestAnimationFrame(t=>{last=t;loop(t);});
 })();
 </script>
-<script type="module" src="online.js?v=mvxu3wu8"></script>
+<script type="module" src="online.js?v=mvxui8e8"></script>
 </body>
 </html>
