@@ -1251,8 +1251,8 @@ const ST=()=>STAGES[G.stage-1];
 const SPD=()=>Math.min(1.8,1+.025*(G.stage-1));
 const BSPD=()=>ST().bs;
 
-function newGame(stage=1){
-  G={firstStage:stage,score:0,lives:3,stage,frame:0,slowT:0,collectQ:null,phase:'intro',phaseT:0,stageT:0,timeline:[],tl:0,extraAt:40000,shake:0,flash:0,bombT:0,newHi:false,fireN:0};
+function newGame(stage=1,duel=null){
+  G={duel,firstStage:stage,score:0,lives:3,stage,frame:0,slowT:0,collectQ:null,phase:'intro',phaseT:0,stageT:0,timeline:[],tl:0,extraAt:40000,shake:0,flash:0,bombT:0,newHi:false,fireN:0};
   P={x:W/2,y:H-40,power:1,bombs:2,cards:[],shield:false,inv:120,dead:0,entering:false,cd:0,abil:{},abT:{},beams:[],orbs:[],drones:[],spin:0};
   syncCardBtn();
   enemies=[];pBul=[];eBul=[];items=[];parts=[];pops=[];boss=null;
@@ -1262,7 +1262,7 @@ const LIMIT_STAGE=10;
 const maxPow=()=>G.stage>=LIMIT_STAGE?6:5;
 function startStage(n){
   const first=G.stageT===undefined||G.firstStage===n;
-  G.stage=n;G.stageT=0;G.tl=0;G.timeline=buildStage(n);G.phase='intro';G.phaseT=0;
+  G.stage=n;G.stageT=0;G.tl=0;G.timeline=buildStage(n,G.duel&&G.duel.seed);G.phase='intro';G.phaseT=0;
   G.limitMsg=n===LIMIT_STAGE||(n>LIMIT_STAGE&&first);
   if(G.limitMsg){toast('파워 제한 해제! 이제 탄을 6단계까지 강화할 수 있고, 다음 스테이지로 가도 파워가 그대로 유지돼요.');setTimeout(()=>sfx('oneup'),400);}
   makeBackdrop(n);
@@ -1451,8 +1451,9 @@ const FORM={
   overlord:[()=>addEnemy('overlord',W/2,-16,MV.overlord,{ty:70,drop:true})],
 };
 const SLOW_FORM=new Set(['heavy','orb','turret','sniper','splitter','wheel','bomber','hydra','beamer','spinner','hunter','mother','prism','sentinel','warden','overlord']);
-function buildStage(n){
-  const st=STAGES[n-1],rng=mulberry(Math.random()*2147483647|0),roster=rosterOf(n),fresh=st.add.filter(k=>k!=='carrier');
+// A duel passes a shared seed so both players meet the same waves in the same order.
+function buildStage(n,seed){
+  const st=STAGES[n-1],rng=mulberry(seed||Math.random()*2147483647|0),roster=rosterOf(n),fresh=st.add.filter(k=>k!=='carrier');
   const pool=[];
   for(const k of roster){if(k==='carrier')continue;let w=k==='dart'?3:2;if(fresh.includes(k))w+=4;for(let i=0;i<w;i++)pool.push(k);}
   const ev=[];let t=110;
@@ -1480,7 +1481,7 @@ function explode(x,y,n,big){
 }
 function dropItem(x,y){
   let t;const r=Math.random();
-  if(Math.random()<.07)t='L';
+  if(!G.duel&&Math.random()<.07)t='L';
   else if(P.power<maxPow()&&r<.5)t='P';else if(r<.75)t='B';else t='S';
   items.push({type:t,x,y,t:0});
 }
@@ -1608,7 +1609,7 @@ function updateBoss(){
       // Card drop odds: mid-boss 60%, stage boss 30%. A dropped card drifts toward the player so it is not lost.
       if(Math.random()<(b.mid?.6:.3)){items.push({type:'C',x:b.x-10,y:b.y,t:0,mag:true});pop(b.x,b.y+14,'CARD!',C.ice);}
       // Unique foes always leave a life and open the collection screen.
-      if(b.uq){items.push({type:'L',x:b.x+10,y:b.y+6,t:0,mag:true});G.collectQ={id:b.uq,name:b.def.name};}
+      if(b.uq){if(!G.duel)items.push({type:'L',x:b.x+10,y:b.y+6,t:0,mag:true});G.collectQ={id:b.uq,name:b.def.name};}
       if(b.mid){dropItem(b.x+10,b.y);G.phase='waves';G.phaseT=200;stageMusic();}
       else{G.phase='clear';G.phaseT=0;stopMusic();}
     }
@@ -1823,6 +1824,7 @@ function update(){
   updatePlayer();if(state!=='play')return;
 
   G.phaseT++;
+  if(G.duel&&G.frame>=DUEL_FRAMES){endDuel('time');return;}
   if(G.phase==='intro'||G.phase==='waves'){
     G.stageT++;
     while(G.tl<G.timeline.length&&G.timeline[G.tl].t<=G.stageT)G.timeline[G.tl++].fn();
@@ -1835,6 +1837,7 @@ function update(){
     if(G.phaseT>=210){spawnBoss();G.phase='boss';G.phaseT=0;playMusic('boss',G.stage%10===0?1.12:1.04);}
   }else if(G.phase==='clear'){
     if(G.phaseT===40)sfx(G.stage===LAST?'ending':'clear');
+    if(G.duel&&G.phaseT>=120){endDuel('clear');return;}
     if(G.stage===LAST){if(G.phaseT>260){ending();return;}}
     else{
       if(G.phaseT===150)sfx('warp');
@@ -2060,6 +2063,7 @@ function render(){
   text('PW',W/2-28,11,C.dim);
   for(let i=0;i<mp;i++){ctx.fillStyle=i<P.power?(i===5?C.volt:C.hot):'#2a2f63';ctx.fillRect(W/2-19+i*4,11,3,5);}
   text(G.stage+'/'+LAST,W/2+10,11,BD.accent);
+  if(G.duel){const left=Math.max(0,DUEL_FRAMES-G.frame)/60|0;text('DUEL '+(left/60|0)+':'+String(left%60).padStart(2,'0'),W-4,27,left<20&&(f>>3)&1?C.hot:C.volt,1,'right');}
   // Copied powers: one icon each, with a pip per level.
   let ai=0;for(const k in P.abil){const x=4+ai*9;ctx.drawImage(ABIL[k].icon,x,27);ctx.fillStyle=ABIL[k].col;for(let j=0;j<P.abil[k];j++)ctx.fillRect(x+j*2+1,35,1,1);ai++;}
   // Pilot portrait above the pause button; blinks now and then, winces while the plane is down.
@@ -2222,9 +2226,27 @@ pickBtns.forEach(b=>{
 function openSelect(){unlockAudio();pickBtns.forEach(b=>b.classList.toggle('on',b.dataset.plane===plane));show('select');(pickBtns.find(b=>b.dataset.plane===plane)||pickBtns[0]).focus();}
 let overAt=0;
 function startGame(stage=1){unlockAudio();MUSIC.paused=false;newGame(stage);state='play';show(null);sfx('start');}
+/* ---------- duel mode and online hooks ---------- */
+// The online add-on (online.js, GitHub version only) drives login, ladder and duels through window.LF.
+// A duel is stage 5 with a shared seed: one life, one bomb, three minutes; it ends on death, time-out or stage clear.
+const DUEL_STAGE=5,DUEL_FRAMES=60*180;
+function startDuel(seed,onEnd){
+  unlockAudio();MUSIC.paused=false;newGame(DUEL_STAGE,{seed,onEnd});
+  G.lives=1;P.power=3;P.bombs=1;state='play';show(null);sfx('start');
+}
+function endDuel(reason){
+  const d=G.duel,score=G.score;
+  state='over';P.dead=-1;stopMusic();sfx(reason==='down'?'over':'clear');
+  show(null);hudBtns.forEach(b=>b.hidden=true);
+  d.onEnd(score,reason);
+}
+const LF=window.LF={hooks:{},addScreen(name,el){scr[name]=el;el.hidden=true;},show,startDuel,owned,saveOwned,
+  get state(){return state;},toTitle:()=>toTitle()};
 function gameOver(){
+  if(G.duel){endDuel('down');return;}
   state='over';overAt=performance.now();P.dead=-1;saveHi(hi);sfx('over');stopMusic();
   lastRun={score:G.score,stage:G.stage,from:'over',sent:false};
+  if(LF.hooks.runEnd)LF.hooks.runEnd(G.score,G.stage);
   $('overScore').textContent=pad(G.score,7);$('overHi').textContent=pad(hi,7);
   $('overStage').textContent=G.stage+' / '+LAST;$('overNew').hidden=!(G.newHi&&G.score>0);
   const canCont=G.stage>1;
@@ -2239,6 +2261,7 @@ function ending(){
   const bonus=G.lives*10000;addScore(bonus);
   state='over';overAt=performance.now();P.dead=-1;saveHi(hi);stopMusic();
   lastRun={score:G.score,stage:G.stage,from:'end',sent:false};
+  if(LF.hooks.runEnd)LF.hooks.runEnd(G.score,G.stage);
   $('endScore').textContent=pad(G.score,7);$('endBonus').textContent=pad(bonus,6);$('endHi').textContent=pad(hi,7);
   $('endNew').hidden=!G.newHi;
   updateSubmitButtons();
@@ -2255,7 +2278,7 @@ function fillGrid(just){
 }
 function openCollect(id,name){
   const u=UQ[id],A=ABIL[u.ab],first=!owned.has(id),had=P.abil[u.ab]||0,lv=Math.min(3,had+1);
-  P.abil[u.ab]=lv;P.abT[u.ab]=40;owned.add(id);saveOwned();
+  P.abil[u.ab]=lv;P.abT[u.ab]=40;owned.add(id);saveOwned();if(LF.hooks.card)LF.hooks.card(id);
   state='collect';MUSIC.paused=true;for(const k in keys)keys[k]=false;drag=null;colMode='game';colAt=performance.now();
   $('colEyebrow').textContent=u.mid?'RARE MID BOSS DEFEATED':'RARE BOSS DEFEATED';$('colTitle').textContent='희귀 적 처치 완료!';
   $('colFeat').hidden=false;$('colInfo').hidden=true;
@@ -2280,7 +2303,7 @@ function closeCollect(){
 }
 function pauseGame(){if(state!=='play')return;state='pause';MUSIC.paused=true;show('pause');for(const k in keys)keys[k]=false;$('btnResume').focus();}
 function resumeGame(){if(state!=='pause')return;state='play';MUSIC.paused=false;show(null);last=performance.now();}
-function toTitle(){state='title';G=null;boss=null;stopMusic();MUSIC.paused=false;makeBackdrop(1);$('titleHi').textContent=pad(hi,7);show('title');$('btnStart').focus();}
+function toTitle(){if(LF.hooks.title)LF.hooks.title();state='title';G=null;boss=null;stopMusic();MUSIC.paused=false;makeBackdrop(1);$('titleHi').textContent=pad(hi,7);show('title');$('btnStart').focus();}
 
 $('btnStart').addEventListener('click',openSelect);
 $('btnSelBack').addEventListener('click',()=>{show('title');$('btnStart').focus();});
@@ -2379,5 +2402,6 @@ initRank();
 requestAnimationFrame(t=>{last=t;loop(t);});
 })();
 </script>
+<script type="module" src="online.js"></script>
 </body>
 </html>

@@ -1,0 +1,70 @@
+rules_version = '2';
+// Lightning Flight online rules. Paste into Firebase console > Firestore Database > Rules, then Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function userDoc(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function onlyChanged(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+    function validNick(n) { return n is string && n.matches('^[가-힣A-Za-z0-9_]{2,10}$'); }
+    function validScore(s) { return s is int && s >= 0 && s < 100000000; }
+
+    // Nicknames are unique: one document per lower-cased nickname, written together with the profile.
+    match /nicks/{name} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(userDoc(request.auth.uid)).data.nick.lower() == name;
+      allow update, delete: if false;
+    }
+
+    // Public profile: nickname, best score, collected cards and the time of the last challenge.
+    match /users/{uid} {
+      allow read: if true;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['nick', 'best', 'bestStage', 'cards', 'lastChallengeAt', 'createdAt'])
+        && validNick(request.resource.data.nick)
+        && existsAfter(/databases/$(database)/documents/nicks/$(request.resource.data.nick.lower()))
+        && request.resource.data.best == 0 && request.resource.data.bestStage == 0
+        && request.resource.data.cards is list && request.resource.data.cards.size() <= 20
+        && request.resource.data.lastChallengeAt == timestamp.value(0)
+        && request.resource.data.createdAt == request.time;
+      // The nickname never changes. A new challenge time is only accepted 3 days after the previous one.
+      allow update: if signedIn() && request.auth.uid == uid
+        && onlyChanged(['best', 'bestStage', 'cards', 'lastChallengeAt'])
+        && validScore(request.resource.data.best)
+        && request.resource.data.bestStage is int && request.resource.data.bestStage >= 0 && request.resource.data.bestStage <= 50
+        && request.resource.data.cards is list && request.resource.data.cards.size() <= 20
+        && (request.resource.data.lastChallengeAt == resource.data.lastChallengeAt
+            || (request.resource.data.lastChallengeAt == request.time
+                && request.time > resource.data.lastChallengeAt + duration.value(3, 'd')));
+      allow delete: if false;
+    }
+
+    // Duels: created by the challenger (together with the cooldown stamp), then each player
+    // first marks "started" (score 0) and later posts a final score once, within 2 days.
+    match /duels/{id} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['challenger', 'defender', 'cNick', 'dNick', 'seed', 'createdAt', 'cScore', 'dScore', 'cDone', 'dDone'])
+        && request.resource.data.challenger == request.auth.uid
+        && request.resource.data.defender != request.auth.uid
+        && exists(userDoc(request.resource.data.defender))
+        && request.resource.data.cNick == get(userDoc(request.auth.uid)).data.nick
+        && request.resource.data.dNick == get(userDoc(request.resource.data.defender)).data.nick
+        && getAfter(userDoc(request.auth.uid)).data.lastChallengeAt == request.time
+        && request.resource.data.seed is int && request.resource.data.seed > 0
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.cScore == -1 && request.resource.data.dScore == -1
+        && request.resource.data.cDone == false && request.resource.data.dDone == false;
+      allow update: if signedIn() && request.time < resource.data.createdAt + duration.value(2, 'd')
+        && ((request.auth.uid == resource.data.challenger && onlyChanged(['cScore', 'cDone'])
+              && ((resource.data.cScore == -1 && request.resource.data.cScore == 0 && request.resource.data.cDone == false)
+                  || (resource.data.cScore == 0 && resource.data.cDone == false && request.resource.data.cDone == true && validScore(request.resource.data.cScore))))
+         || (request.auth.uid == resource.data.defender && onlyChanged(['dScore', 'dDone'])
+              && ((resource.data.dScore == -1 && request.resource.data.dScore == 0 && request.resource.data.dDone == false)
+                  || (resource.data.dScore == 0 && resource.data.dDone == false && request.resource.data.dDone == true && validScore(request.resource.data.dScore)))));
+      allow delete: if false;
+    }
+  }
+}
