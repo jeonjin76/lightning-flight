@@ -102,7 +102,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ice);outline-of
 .pick:hover,.pick.on{box-shadow:inset 0 0 0 2px var(--volt)}
 .pick canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .pick .pv{width:34cqw;height:30cqw}
-.pick .ps{width:13cqw;height:13cqw}
+.pick .pr{display:flex;align-items:flex-end;gap:2cqw}
+.pick .pb{width:12.75cqw;height:15.75cqw}
+.pick .ps{width:9.75cqw;height:9.75cqw}
 .pick b{font-family:var(--font-display);font-weight:400;font-size:5.4cqw;color:var(--volt)}
 .pick span{font-size:3.4cqw;color:var(--dim);line-height:1.3}
 .toast{position:absolute;left:6cqw;right:6cqw;top:12%;margin:0;padding:2.4cqw 3cqw;background:rgba(7,8,26,.86);box-shadow:inset 0 0 0 2px var(--volt);color:var(--ink);font-size:4.2cqw;line-height:1.35;text-align:center;pointer-events:none}
@@ -123,11 +125,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ice);outline-of
       <h2>기체 선택</h2>
       <div class="picks">
         <button class="pick" type="button" data-plane="shiba">
-          <canvas class="pv" width="34" height="30"></canvas><canvas class="ps" width="13" height="13"></canvas>
+          <canvas class="pv" width="34" height="30"></canvas><span class="pr"><canvas class="pb" width="17" height="21"></canvas><canvas class="ps" width="13" height="13"></canvas></span>
           <b>시바 번개호</b><span>일본 · 시바견<br>앞으로 곧게 쏘는 레이저<br>빠른 이동</span>
         </button>
         <button class="pick" type="button" data-plane="jindo">
-          <canvas class="pv" width="34" height="30"></canvas><canvas class="ps" width="13" height="13"></canvas>
+          <canvas class="pv" width="34" height="30"></canvas><span class="pr"><canvas class="pb" width="17" height="21"></canvas><canvas class="ps" width="13" height="13"></canvas></span>
           <b>진돗개 태극호</b><span>대한민국 · 진돗개<br>넓게 퍼지는 태극 구슬탄<br>조금 느린 이동</span>
         </button>
       </div>
@@ -300,8 +302,8 @@ const STAGES=STAGE_NAMES.map((name,i)=>{
 const rosterOf=n=>STAGES.slice(0,n).flatMap(s=>s.add);
 
 /* ---------- bosses ---------- */
-const SHAPES=['warbird','crab','eye','fortress','manta'];
-const SHAPE_NAME={warbird:'WARBIRD',crab:'IRON CRAB',eye:'DEEP EYE',fortress:'BASTION',manta:'NEON MANTA',crown:'STAR TYRANT'};
+const SHAPES=['veil','spine','halo','trinity','shroud'];
+const SHAPE_NAME={veil:'VEIL',spine:'SPINE',halo:'HALO',trinity:'TRINITY',shroud:'SHROUD',seraph:'SERAPH'};
 const ROMAN=['','II','III','IV','V','VI','VII','VIII','IX','X'];
 const PAT_ORDER=['fan','spiral','cannons','ring','stream','rain'];
 const HAND_PAL=[['#3a1c7a','#9b5cff','#c9c3e6'],['#5a2a10','#ff9f1c','#ffe08a'],['#0b3a4a','#1aa6c4','#bff6ff'],['#3a3420','#b59a3c','#fff0a0'],['#3a0a4a','#ff4dd8','#ffd0f4'],
@@ -309,7 +311,7 @@ const HAND_PAL=[['#3a1c7a','#9b5cff','#c9c3e6'],['#5a2a10','#ff9f1c','#ffe08a'],
 const HAND_PATS=[['fan','spiral','cannons'],['cannons','ring','fan'],['spiral','ring','stream'],['rain','cannons','fan','ring'],['stream','spiral','rain'],
  ['ring','fan','cannons','spiral'],['rain','ring','stream','cannons'],['spiral','stream','rain','fan'],['ring','spiral','stream','fan'],['fan','spiral','cannons','ring','stream','rain']];
 const BOSSES=STAGES.map(st=>{
-  const n=st.n,big=n%10===0,shape=big?'crown':SHAPES[(n-1)%5],tier=big?n/10-1:Math.floor((n-1)/5),hue=(n*67)%360;
+  const n=st.n,big=n%10===0,shape=big?'seraph':SHAPES[(n-1)%5],tier=big?n/10-1:Math.floor((n-1)/5),hue=(n*67)%360;
   const cnt=Math.min(6,3+Math.floor(n/8));
   return{shape,big,mk:Math.min(3,tier),
     name:n===LAST?'STAR EMPEROR':SHAPE_NAME[shape]+(tier?' '+ROMAN[tier]:''),
@@ -359,7 +361,7 @@ function whiteOf(c){
   g.drawImage(c,0,0);g.globalCompositeOperation='source-in';g.fillStyle='#fff';g.fillRect(0,0,o.width,o.height);
   return o;
 }
-const pair=c=>{face(c);return{n:c,w:whiteOf(c)};};
+const pair=c=>({n:c,w:whiteOf(c)});
 function discOn(g,cx,cy,r,col){g.fillStyle=col;for(let y=-r;y<=r;y++){const xx=Math.floor(Math.sqrt(r*r-y*y));g.fillRect(cx-xx,cy+y,xx*2+1,1);}}
 function discSprite(layers){const R=layers[0][0],c=mk(R*2+1,R*2+1),g=c.getContext('2d');for(const[r,col]of layers)discOn(g,R,R,r,col);return c;}
 // Symmetric outlined ship generated from a seed: each later enemy kind gets its own silhouette.
@@ -377,41 +379,28 @@ function genSprite(seed,hw,h,main){
   return c;
 }
 
-// Cute face: two beady eyes (with a shine on larger sprites) and pink cheeks, placed on the body near the middle.
-function face(c){
-  const w=c.width,h=c.height,g=c.getContext('2d'),d=g.getImageData(0,0,w,h).data;
-  const on=(x,y)=>x>=0&&y>=0&&x<w&&y<h&&d[(y*w+x)*4+3]>200;
-  const s=w>=24?3:w>=13?2:1,eh=s===1?2:s,cx=(w-1)>>1,gap=Math.max(1,Math.round(w*.17));
-  const box=(x0,y0)=>{for(let y=y0;y<y0+eh;y++)for(let x=x0;x<x0+s;x++)if(!on(x,y))return false;return true;};
-  for(const f of[.45,.38,.52,.3,.6]){
-    const y=Math.round(h*f)-(eh>>1),xl=cx-gap-s+1,xr=w-1-cx+gap;
-    if(!box(xl,y)||!box(xr,y))continue;
-    if(s>=3){g.fillStyle='#ffffff';g.fillRect(xl-1,y-1,s+2,eh+2);g.fillRect(xr-1,y-1,s+2,eh+2);}
-    g.fillStyle='#1a1030';g.fillRect(xl,y,s,eh);g.fillRect(xr,y,s,eh);
-    if(s>=2){g.fillStyle='#ffffff';g.fillRect(xl,y,1,1);g.fillRect(xr,y,1,1);}
-    g.fillStyle='#ff8fb1';
-    if(on(xl-1,y+eh))g.fillRect(xl-1,y+eh,s>=3?2:1,1);
-    if(on(xr+s,y+eh))g.fillRect(xr+s-(s>=3?1:0),y+eh,s>=3?2:1,1);
-    break;
-  }
-  return c;
-}
-
 /* ---------- player planes and pilots ---------- */
 const PLAYER_HALF=['.....w','.....w','....wc','....wc','...wcc','...www','..bwww','.bbwrw','bbbwww','bb.www','b...ww'];
 const PPAL={w:'#e8ecff',c:C.ice,b:'#3d6bff',r:C.hot,y:C.volt,o:C.orange};
 // Jindo plane: round red/blue wings with twin engines on the wing tips (taegeuk colours).
 const JINDO_HALF=['......w','.....wc','.....wc','....wcc','.r..wcc','rrr.www','rRrrwww','rRRrrww','.rRRrbw','..b.bbw','..B..Bw'];
 const JPAL={w:'#f3f0ff',c:C.ice,r:'#ff4d6d',R:'#a8243c',b:'#3d6bff',B:'#1e3a9a',y:C.volt,o:C.orange};
-// Dog pilot head, left half (mirrored): k outline, f fur, i inner ear, g goggles, l lens, w white muzzle, e eye, h shine, n nose, m mouth, p blush, s scarf.
-const DOG_HALF=['.k......','kik.....','kiik....','kfiikkkk','kfffffff','kfggggff','kfgllggg','kfggggff','kfffffff',
-  'kfwhefff','kwweewww','kwpwwwnn','.kwwwwwm','..kwwwmw','...kkkkk','...sssss','....sssS'];
-const DOG_BLINK=DOG_HALF.map((r,i)=>i===9?'kfwfffff':r);
+// Dog pilot in a teal hoodie with magenta trim and an orange backpack, left half (mirrored).
+// k outline, f fur, F fur shade, i inner ear, c cream muzzle, e eye, n nose, m mouth,
+// t hoodie, u hoodie light, T hoodie shade, p magenta trim, P string tip, o backpack strap, K pants, s shoe.
+const DOG_HEAD=['..k......','.kik.....','.kiik....','kfiiFkkkk','kfffFFFFF','kffffffff','kffffefff',
+  'kfcccccnn','kcccccmcc','.kcccccmm','..kkkcccc'];
+const DOG_BODY=['.ttkkkkkk','tottuuupt','toTuuuupt','tTtuuutPt','fTttuuttt','fTtttttTt','.pppppppp',
+  '...KKKK..','...KKKK..','..ssss...'];
+const DOG_BLINK_HEAD=DOG_HEAD.map((r,i)=>i===6?'kfffkkfff':r);
 const DOG_PAL={
-  shiba:{k:'#4a2a12',f:'#e98b2a',i:'#ffb37a',w:'#fff3dc',s:'#ff4d6d',S:'#c21f3a'},
-  jindo:{k:'#5a4a3a',f:'#f2ead8',i:'#ffb3c1',w:'#ffffff',s:'#3d6bff',S:'#1e3a9a'},
+  shiba:{k:'#3a2418',f:'#b0703e',F:'#8a5430',i:'#e8b48a',c:'#f2d6ae'},
+  jindo:{k:'#5a4a3a',f:'#f2ead8',F:'#d8ccb4',i:'#ffc2c8',c:'#ffffff'},
 };
-const DOG_COMMON={g:'#5a5f94',l:C.ice,e:'#1a1030',h:'#ffffff',n:'#1a1030',m:'#4a2a12',p:'#ff8fb1'};
+const DOG_COMMON={e:'#1a1030',n:'#1a1030',m:'#3a2418',t:'#1f7f86',u:'#2aa9a8',T:'#155a62',p:'#e040c0',P:'#ff9be6',o:'#ef6a2a',K:'#1a1626',s:'#3a2a2a'};
+// Phone in the left hand, drawn after mirroring so only one hand holds it.
+function withPhone(c,x,y){const g=c.getContext('2d');g.fillStyle='#1a1030';g.fillRect(x,y,3,4);g.fillStyle=C.ice;g.fillRect(x+1,y+1,1,2);return c;}
+function pilotBody(kind){return withPhone(sprite(sym([...DOG_HEAD,...DOG_BODY]),{...DOG_COMMON,...DOG_PAL[kind]}),0,14);}
 function flagJapan(g,x,y){g.fillStyle='#1a1030';g.fillRect(x-1,y-1,17,12);g.fillStyle='#ffffff';g.fillRect(x,y,15,10);g.fillStyle='#d7263d';[3,5,7,7,7,5,3].forEach((w,i)=>g.fillRect(x+7-(w>>1),y+2+i,w,1));}
 function flagKorea(g,x,y){
   g.fillStyle='#1a1030';g.fillRect(x-1,y-1,17,12);g.fillStyle='#ffffff';g.fillRect(x,y,15,10);
@@ -433,8 +422,8 @@ function portrait(kind,blink){
   g.fillStyle='#ffd23f';g.fillRect(0,0,34,30);g.fillStyle='#10132e';g.fillRect(1,1,32,28);
   g.fillStyle=kind==='shiba'?'#2a1a3e':'#14224a';g.fillRect(2,2,30,26);
   g.fillStyle='rgba(255,255,255,.08)';g.fillRect(2,2,30,8);
-  g.drawImage(sprite(sym(blink?DOG_BLINK:DOG_HALF),{...DOG_COMMON,...DOG_PAL[kind]}),4,7);
-  (kind==='shiba'?flagJapan:flagKorea)(g,17,18);
+  g.drawImage(sprite(sym([...(blink?DOG_BLINK_HEAD:DOG_HEAD),...DOG_BODY.slice(0,6)]),{...DOG_COMMON,...DOG_PAL[kind]}),2,12);
+  (kind==='shiba'?flagJapan:flagKorea)(g,18,3);
   return c;
 }
 const PLANES={
@@ -445,7 +434,7 @@ const PLANES={
     a:sprite(sym([...JINDO_HALF,'..y....','..o....']),JPAL),b:sprite(sym([...JINDO_HALF,'..y....','.......']),JPAL),
     life:sprite(sym(['..w','.rw','rrw','r.b']),JPAL)},
 };
-for(const k in PLANES){PLANES[k].face=portrait(k,false);PLANES[k].blink=portrait(k,true);}
+for(const k in PLANES){PLANES[k].face=portrait(k,false);PLANES[k].blink=portrait(k,true);PLANES[k].body=pilotBody(k);}
 const PLANE_KEY='lightning-flight-plane';
 let plane=(()=>{try{const v=localStorage.getItem(PLANE_KEY);return PLANES[v]?v:'shiba';}catch(e){return'shiba';}})();
 const PL=()=>PLANES[plane];
@@ -453,22 +442,18 @@ const PL=()=>PLANES[plane];
 const MINE=symV(sym(['....s','.s.dd','..dGG','.dGrr','sdGrY']));
 const EB=['..hhh..','.hmmmh.','hmmwmmh','hmwwwmh','hmmwmmh','.hmmmh.','..hhh..'];
 // Enemy bullet looks: each enemy kind and boss pattern fires its own shape.
-const HEART=['.hh.hh.','hHHhHHh','hHwHHHh','hHHHHHh','.hHHHh.','..hHh..','...h...'];
 const DIAMOND=['..g..','.gGg.','gGwGg','.gGg.','..g..'];
 const DROP=['..b..','..b..','.bBb.','.bBb.','bBwBb','bBBBb','.bbb.'];
 const BUL={
   orb:[sprite(EB,{h:'rgba(255,95,162,.35)',m:'#ff5fa2',w:C.white}),sprite(EB,{h:'rgba(255,179,209,.3)',m:'#ffb3d1',w:C.white})],
-  heart:[sprite(HEART,{h:'#ff3d7f',H:'#ff8fb8',w:C.white}),sprite(HEART,{h:'#ff6b9e',H:'#ffc2d8',w:C.white})],
   diamond:[sprite(DIAMOND,{g:'#2ee87a',G:'#b6ffd2',w:C.white}),sprite(DIAMOND,{g:'#7dffb0',G:'#e6fff0',w:C.white})],
-  star:[sprite(['...c...','...c...','..cCc..','ccCwCcc','..cCc..','...c...','...c...'],{c:C.ice,C:'#d8fdff',w:C.white}),
-        sprite(['c.....c','.c...c.','..cCc..','..CwC..','..cCc..','.c...c.','c.....c'],{c:C.ice,C:'#d8fdff',w:C.white})],
   big:[discSprite([[4,'rgba(255,122,47,.45)'],[3,C.orange],[2,C.volt],[1,C.white]]),discSprite([[4,'rgba(255,77,109,.45)'],[3,C.hot],[2,C.orange],[1,C.cream]])],
   drop:[sprite(DROP,{b:'#3d8cff',B:'#9cc8ff',w:C.white}),sprite(DROP,{b:'#5ea4ff',B:'#d0e6ff',w:C.white})],
 };
-const E_STYLE={zig:'diamond',heavy:'big',mine:'big',sniper:'needle',splitter:'diamond',turret:'diamond',orb:'star',
-  wheel:'heart',lancer:'needle',phantom:'diamond',wraith:'heart',bomber:'big',hydra:'big',beamer:'needle',reflector:'drop',
-  spinner:'star',hunter:'diamond',prism:'heart',sentinel:'needle',meteor:'big',dragonfly:'drop',warden:'drop',overlord:'star'};
-const PAT_STYLE={fan:'diamond',spiral:'star',cannons:'big',ring:'heart',stream:'needle',rain:'drop'};
+const E_STYLE={zig:'diamond',heavy:'big',mine:'big',sniper:'needle',splitter:'diamond',turret:'diamond',orb:'diamond',
+  lancer:'needle',phantom:'diamond',bomber:'big',hydra:'big',beamer:'needle',reflector:'drop',
+  spinner:'diamond',hunter:'diamond',sentinel:'needle',meteor:'big',dragonfly:'drop',warden:'drop',overlord:'diamond'};
+const PAT_STYLE={fan:'diamond',spiral:'diamond',cannons:'big',ring:'orb',stream:'needle',rain:'drop'};
 let BST='orb';
 const SPR={
   bombIcon:sprite(sym(['.yy','yYY','yYY','.yy']),{y:C.volt,Y:'#d99a00'}),
@@ -478,7 +463,7 @@ const SPR={
   heavy:pair(sprite(sym(['..pp....','.pPPp...','.pPPpppp','pppppPPP','pPPpppPy','pppppPPP','.p..pppp','.....pPp','......pp']),{p:C.grape,P:'#5a2bb5',y:C.hot})),
   carrier:pair(sprite(sym(['..ooooo','.oOOOOO','ooOyyyy','ooOyOyO','ooOyyyy','.oOOOOO','..o.o.o']),{o:'#ff9f1c',O:'#a85a00',y:'#ffe08a'})),
   mine:pair(sprite(MINE,{s:'#c9c3e6',d:'#2e2e3e',G:'#5a5a74',r:C.hot,Y:C.volt})),
-  mineAlt:face(sprite(MINE,{s:'#ffffff',d:'#2e2e3e',G:'#5a5a74',r:C.volt,Y:C.white})),
+  mineAlt:sprite(MINE,{s:'#ffffff',d:'#2e2e3e',G:'#5a5a74',r:C.volt,Y:C.white}),
   sniper:pair(sprite(sym(['c.....','cc....','.ccddd','..cdLL','..cdLr','...cdd','.....l']),{c:'#1aa6c4',d:'#0b3a4a',L:'#bff6ff',r:C.hot,l:C.volt})),
   splitter:pair(sprite(sym(['..oo...','.oOOo..','oOOOOoo','oOyOOOO','oOOOOyO','.oOOOOO','..oo.oO','......o']),{o:'#ff7a9c',O:'#8a1040',y:C.cream})),
   turret:pair(discSprite([[6,'#24301f'],[5,'#3c4a3a'],[3,'#6fbf4a'],[1,'#d8ffc0']])),
@@ -488,65 +473,111 @@ const SPR={
 NEW_TYPES.forEach((t,i)=>{SPR[t.name]=pair(genSprite(1009+i*7919,t.hw,t.h,t.col));});
 
 /* ---------- boss sprites ---------- */
-const BOSS_SIZE={warbird:[56,38],crab:[64,42],eye:[56,52],fortress:[76,36],manta:[80,34],crown:[92,56]};
+// Bosses are eerie geometric beings: black bodies, blank bone masks, a red sphere core and a floating halo (drawn live).
+const BONE='#ece6d6',BONE2='#a89e8c',INK='#0c0810';
+const BOSS_SIZE={veil:[56,38],spine:[64,42],halo:[56,52],trinity:[76,36],shroud:[80,34],seraph:[92,56]};
+// Scanline polygon fill on the pixel grid (no anti-aliasing).
+function fillPoly(g,pts,col){
+  const ys=pts.map(p=>p[1]),y0=Math.floor(Math.min(...ys)),y1=Math.ceil(Math.max(...ys));
+  g.fillStyle=col;
+  for(let y=y0;y<=y1;y++){
+    const yc=y+.5,xs=[];
+    for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];if((a[1]<=yc&&b[1]>yc)||(b[1]<=yc&&a[1]>yc))xs.push(a[0]+(yc-a[1])/(b[1]-a[1])*(b[0]-a[0]));}
+    xs.sort((p,q)=>p-q);
+    for(let k=0;k+1<xs.length;k+=2){const xa=Math.round(xs[k]),xb=Math.round(xs[k+1]);if(xb>xa)g.fillRect(xa,y,xb-xa,1);}
+  }
+}
 function bossCanvas(def,core){
-  const[d,m,l]=def.pal,mk2=def.mk>=1,[w,h]=BOSS_SIZE[def.shape];
+  const[d,m]=def.pal,tr=def.mk,[w,h]=BOSS_SIZE[def.shape],X=w/2;
   const c=mk(w,h),g=c.getContext('2d');
+  // Every helper draws the left half and its mirror image, so pieces are given in left-half coordinates.
   const R=(x,y,ww,hh,col)=>{g.fillStyle=col;g.fillRect(x,y,ww,hh);g.fillRect(w-x-ww,y,ww,hh);};
-  const disc=(cx,cy,r,col)=>discOn(g,cx,cy,r,col);
-  let fc=null;
-  const coreAt=(cx,cy,r)=>{disc(cx,cy,r+1,'#14061c');disc(cx,cy,r,core);disc(cx-1,cy-1,Math.max(1,r>>1),C.cream);if(r>=4)fc=[cx,cy,r];};
-  if(def.mk>=2){R(1,h-8,4,7,d);R(2,h-5,2,5,l);}
+  const L=(x0,y0,x1,y1,th,col)=>{line(g,x0,y0,x1,y1,th,col);line(g,w-1-x0,y0,w-1-x1,y1,th,col);};
+  const poly=(pts,col)=>{fillPoly(g,pts,col);fillPoly(g,pts.map(([x,y])=>[w-x,y]),col);};
+  const coreAt=(cx,cy,r)=>{discOn(g,cx,cy,r+1,'#14061c');discOn(g,cx,cy,r,core);discOn(g,cx-1,cy-1,Math.max(1,r>>1),C.cream);};
+  // Blank bone mask: pointed shield, centre ridge, two vertical slits with a red glint.
+  const mask=(cy,mw,mh)=>{
+    const t=cy-mh/2,b=cy+mh/2,s=Math.max(2,mh*.45|0),sx=X-Math.round(mw/4)-1,sy=Math.round(cy-mh*.2);
+    poly([[X-mw/2-1,t-1],[X,t-2],[X,b+1],[X-mw/2-1,cy+mh*.15]],INK);
+    poly([[X-mw/2,t],[X,t-1],[X,b],[X-mw/2,cy+mh*.15]],BONE);
+    poly([[X-mw/2,cy+mh*.15],[X-mw/4,cy+mh*.1],[X,b],[X-mw/4,cy+mh*.35]],BONE2);
+    g.fillStyle=BONE2;g.fillRect(X-1,Math.round(t),2,Math.round(mh));
+    R(sx,sy,1,s,INK);R(sx,sy+s,1,1,'#ff3d3d');
+  };
+  let main;
   switch(def.shape){
-    case'warbird':
-      R(0,14,6,14,d);R(2,16,3,10,m);R(2,27,3,7,l);
-      R(4,9,20,11,d);R(6,11,18,7,m);R(10,8,4,2,C.volt);
-      R(13,19,4,9,l);R(19,0,9,32,d);R(21,2,7,27,m);R(22,30,6,6,d);R(24,34,4,4,l);
-      if(mk2){R(8,4,3,6,l);R(16,22,2,6,m);}
-      coreAt(28,15,4);break;
-    case'crab':
-      R(20,6,12,24,d);R(22,8,10,20,m);R(14,2,8,4,d);R(16,0,3,3,l);
-      R(10,10,10,3,d);R(8,16,12,3,d);R(10,22,10,3,d);
-      R(4,24,8,5,d);R(0,26,6,14,d);R(2,28,3,10,m);R(6,34,6,6,d);R(7,36,4,3,l);
-      R(26,30,6,6,d);R(28,34,4,6,l);
-      if(mk2){R(24,0,3,6,l);R(12,28,4,8,m);R(0,20,3,5,l);}
-      coreAt(32,18,5);break;
-    case'eye':
-      R(0,20,6,12,d);R(1,22,4,8,m);R(6,24,4,4,d);
-      disc(28,26,22,d);disc(28,26,19,m);disc(28,26,13,l);disc(28,28,8,d);
-      if(mk2){R(24,0,4,6,l);R(10,6,4,4,m);R(4,40,4,8,m);}
-      coreAt(28,28,5);break;
-    case'fortress':
-      R(0,8,38,20,d);R(2,10,36,16,m);R(4,12,34,2,l);
-      for(const x of[6,18,30]){R(x,26,6,4,d);R(x+2,30,2,5,l);}
-      R(30,0,8,10,d);R(32,2,6,6,m);
-      if(mk2){R(0,4,6,28,d);R(1,6,4,24,l);R(12,2,4,6,m);R(20,4,3,4,C.volt);}
-      coreAt(38,18,5);break;
-    case'manta':
-      for(let i=0;i<10;i++){R(i*3,16-i,3,6+(i*1.5|0),d);R(i*3+1,17-i,2,4+(i*1.5|0),m);}
-      R(30,2,10,28,d);R(32,4,8,24,m);R(34,28,6,6,d);R(36,32,4,2,l);R(14,12,3,2,l);
-      if(mk2){R(0,20,3,10,l);R(20,24,3,8,d);R(21,30,1,3,l);R(33,0,3,4,l);}
-      coreAt(40,14,4);break;
-    case'crown':
-      R(0,30,8,20,d);R(2,32,4,16,m);
-      R(6,24,40,20,d);R(8,26,38,16,m);R(10,40,36,2,l);
-      R(10,6,6,20,d);R(12,8,2,16,l);R(24,0,8,26,d);R(26,2,4,22,m);R(40,4,6,22,d);R(42,6,2,18,l);
-      R(12,3,2,2,C.volt);R(27,0,2,2,C.ice);R(18,44,4,10,l);R(30,44,4,8,l);
-      coreAt(20,33,3);coreAt(72,33,3);coreAt(46,34,6);break;
+    case'veil':
+      poly([[X,8],[2,3],[0,10],[6,20],[14,26],[X,30]],INK);
+      L(X-2,10,2,4,2,BONE);L(X-2,14,3,13,1,BONE);L(X-2,18,7,22,1,BONE2);L(X-2,22,14,27,1,BONE2);L(2,4,0,10,1,m);
+      poly([[X,6],[X-5,10],[X-4,28],[X,34]],d);
+      for(const bx of[X-4,X-9])for(let y=29;y<38;y++)R(Math.round(bx+Math.sin(y*.8)*1.5),y,1,1,m);
+      if(tr>=1)L(2,3,0,0,1,BONE);
+      if(tr>=2){poly([[16,26],[8,31],[12,35],[22,30]],INK);L(22,29,10,33,1,BONE2);}
+      mask(10,12,10);main=[X,22,4];break;
+    case'spine':
+      L(X-4,12,10,8,2,BONE);L(10,8,4,18,2,BONE);L(4,18,8,24,2,BONE2);
+      L(X-4,22,14,22,2,BONE2);L(14,22,10,32,2,BONE2);L(10,32,14,36,1,BONE2);
+      poly([[X,10],[X-10,14],[X-10,32],[X,36]],INK);
+      for(const y of[16,20,24,28,32])L(X-1,y,X-9,y+2,1,BONE2);
+      L(X-10,14,X-10,32,1,m);
+      for(let y=0;y<41;y+=5){R(X-3,y,3,3,BONE);R(X-2,y+3,2,2,BONE2);}
+      if(tr>=1)L(10,8,8,2,1,BONE);
+      if(tr>=2){g.fillStyle=BONE2;g.fillRect(X-1,36,2,6);L(4,18,0,16,1,BONE);}
+      mask(5,12,9);main=[X,24,5];break;
+    case'halo':
+      discOn(g,X,26,23,INK);ringPx(g,X,26,22,BONE);ringPx(g,X,26,21,BONE);ringPx(g,X,26,20,BONE2);
+      discOn(g,X,26,17,d);ringPx(g,X,26,15,m);discOn(g,X,26,11,INK);ringPx(g,X,26,10,BONE2);
+      for(let i=0;i<8;i++){const a=i/8*Math.PI*2+Math.PI/8;line(g,X+Math.cos(a)*23,26+Math.sin(a)*23,X+Math.cos(a)*27,26+Math.sin(a)*27,2,BONE);}
+      if(tr>=1)for(let i=0;i<16;i++){const a=i/16*Math.PI*2;discOn(g,Math.round(X+Math.cos(a)*18),Math.round(26+Math.sin(a)*18),1,BONE);}
+      if(tr>=2)for(let i=0;i<4;i++){const a=i/4*Math.PI*2;line(g,X+Math.cos(a)*27,26+Math.sin(a)*27,X+Math.cos(a)*30,26+Math.sin(a)*30,1,m);}
+      mask(17,10,7);main=[X,29,5];break;
+    case'trinity':
+      poly([[26,8],[6,2],[0,10],[20,30]],INK);poly([[24,9],[8,4],[4,10],[19,25]],d);
+      L(6,2,0,10,1,BONE);L(0,10,20,30,1,BONE2);L(6,2,26,8,1,m);
+      poly([[X,0],[X-10,4],[X,36]],INK);poly([[X,2],[X-7,5],[X,26]],d);L(X-10,4,X-1,35,1,BONE);
+      ringPx(g,X,14,8,BONE);ringPx(g,X,14,9,BONE2);
+      if(tr>=1)poly([[14,30],[10,34],[17,35]],m);
+      if(tr>=2){L(X-10,4,X-12,0,1,BONE);L(0,10,0,16,1,m);}
+      main=[X,14,5];break;
+    case'shroud':
+      poly([[X,6],[0,12],[4,18],[16,22],[30,24],[X,30]],INK);
+      g.globalCompositeOperation='source-atop';
+      for(let k=0;k<7;k++){const x=X-4-k*6;line(g,x,4,x-5,30,2,d);line(g,w-1-x,4,w-1-x+5,30,2,d);}
+      g.globalCompositeOperation='source-over';
+      L(0,12,4,18,1,BONE);L(4,18,16,22,1,BONE2);L(16,22,30,24,1,BONE2);
+      poly([[X,24],[X-4,26],[X,34]],d);
+      if(tr>=1)L(0,12,0,6,1,BONE);
+      if(tr>=2){poly([[10,20],[4,26],[14,24]],INK);L(4,26,14,24,1,BONE2);}
+      mask(10,14,10);main=[X,21,4];break;
+    case'seraph':
+      for(let i=2;i>=0;i--){
+        poly([[X-6,20+i*5],[4+i*6,2+i*16],[i*6,8+i*16],[X-8,26+i*5]],INK);
+        L(X-6,20+i*5,4+i*6,2+i*16,1,BONE);L(X-8,23+i*5,3+i*6,6+i*16,1,i===1?m:BONE2);
+      }
+      poly([[X,14],[X-10,20],[X-8,46],[X,54]],d);
+      for(const y of[24,30,36,42])L(X-1,y,X-8,y+2,1,BONE2);
+      L(X-6,4,X-8,0,1,BONE);L(X-2,3,X-2,0,1,BONE);
+      mask(12,18,16);
+      coreAt(30,30,3);coreAt(w-30,30,3);main=[X,33,6];break;
   }
-  if(def.mk>=3){R(Math.floor(w*.3),0,2,4,C.volt);R(Math.floor(w*.18),h-3,3,3,C.ice);}
-  // Big shiny eyes and blush on either side of the main core, so every boss has a cute face.
-  if(fc){
-    const[cx,cy,r]=fc,ey=cy-r;
-    for(const ex of[cx-r-6,cx+r+6]){
-      disc(ex,ey,5,'#1a1030');disc(ex,ey,4,'#ffffff');disc(ex,ey+1,3,'#1a1030');
-      g.fillStyle='#ffffff';g.fillRect(ex-2,ey-1,2,2);g.fillRect(ex+1,ey+2,1,1);
-      g.fillStyle='#ff8fb1';g.fillRect(ex+(ex<cx?-5:2),ey+6,4,2);
-    }
-  }
+  if(tr>=3){L(Math.floor(w*.3),0,Math.floor(w*.3)-2,4,1,C.volt);}
+  coreAt(...main);
+  c.core=main;
   return c;
 }
-function makeBoss(def){const n=bossCanvas(def,C.hot);return{n,hot:bossCanvas(def,C.volt),w:whiteOf(n)};}
+function makeBoss(def){const n=bossCanvas(def,C.hot);return{n,hot:bossCanvas(def,C.volt),w:whiteOf(n),core:n.core};}
+// Mid-bosses: a small bone polygon (3-6 sides by stage) around a red core.
+function midAngelCanvas(n,core){
+  const w=29,h=27,cx=14,cy=13,k=3+(n%4),c=mk(w,h),g=c.getContext('2d'),col=hsl((n*67+180)%360,70,45);
+  const pts=r=>[...Array(k)].map((_,i)=>{const a=Math.PI/2+i/k*Math.PI*2;return[cx+.5+Math.cos(a)*r,cy+.5+Math.sin(a)*r];});
+  const outer=pts(10),inner=pts(6.5);
+  fillPoly(g,pts(11),INK);fillPoly(g,outer,BONE2);fillPoly(g,pts(9),INK);fillPoly(g,inner,col);
+  for(let i=0;i<k;i++){const[a,b]=outer[i],[e,f]=outer[(i+1)%k];line(g,a,b,e,f,1,BONE);
+    const an=Math.PI/2+i/k*Math.PI*2;line(g,cx+Math.cos(an)*11,cy+Math.sin(an)*11,cx+Math.cos(an)*14,cy+Math.sin(an)*14,1,BONE);}
+  discOn(g,cx,cy,4,'#14061c');discOn(g,cx,cy,3,core);discOn(g,cx-1,cy-1,1,C.cream);
+  c.core=[cx,cy,3];
+  return c;
+}
 
 function itemSprite(letter,fill,rim){
   const c=mk(9,9),g=c.getContext('2d');
@@ -1255,9 +1286,9 @@ const MID_PATS=[['fan','ring'],['spiral','cannons'],['stream','rain'],['ring','s
 function spawnBoss(mid=false){
   let def,spr,w,h;
   if(mid){
-    const n=G.stage,c=face(genSprite(5003+n*131,13,20,hsl((n*67+180)%360,85,60))),pats=[...MID_PATS[(n-2)%MID_PATS.length]];
+    const n=G.stage,c=midAngelCanvas(n,C.hot),pats=[...MID_PATS[(n-2)%MID_PATS.length]];
     if(n>=25)pats.push(pats.includes('ring')?'rain':'ring');
-    def={name:'MID BOSS',big:false,pats,hp:Math.round(80+14*n)};spr={n:c,hot:c,w:whiteOf(c)};w=c.width;h=c.height;
+    def={name:'MID BOSS',big:false,pats,hp:Math.round(80+14*n)};spr={n:c,hot:midAngelCanvas(n,C.volt),w:whiteOf(c),core:c.core};w=c.width;h=c.height;
   }else{def=BOSSES[G.stage-1];spr=makeBoss(def);[w,h]=BOSS_SIZE[def.shape];}
   boss={def,spr,mid,hw:w*.42,hh:h*.42,ty:26+h/2,x:W/2,y:-h/2,hp:def.hp,max:def.hp,t:0,mt:0,mode:'sway',pat:0,patT:0,flash:0,state:'enter',ang:0,aim:0,dying:0,stage:1};
 }
@@ -1574,7 +1605,16 @@ function render(){
     const b=boss;
     if(b.warnDash&&(f>>2)&1){ctx.fillStyle=rgba(C.hot,.22);ctx.fillRect(Math.round(b.dashX-b.hw),Math.round(b.y),Math.round(b.hw*2),H);}
     const img=b.flash?b.spr.w:(b.stage>=2&&(f>>3)&1?b.spr.hot:b.spr.n);
-    if(!(b.state==='dying'&&(b.dying>>2)&1))draw(img,b.x,b.y);
+    if(!(b.state==='dying'&&(b.dying>>2)&1)){
+      draw(img,b.x,b.y);
+      // Floating halo above the body (slowly turning) and a pulsing glow around the core.
+      const hx=b.x,hy=Math.round(b.y-b.hh-(b.mid?4:6)),rx=Math.max(7,b.hw*.42),N=b.mid?12:18;
+      for(let i=0;i<N;i++){const a=b.t*.03+i/N*Math.PI*2,front=Math.sin(a)>0;ctx.fillStyle=front?'#fff6a0':'rgba(255,210,63,.45)';ctx.fillRect(Math.round(hx+Math.cos(a)*rx),Math.round(hy+Math.sin(a)*rx*.28),front?2:1,1);}
+      const[kx,ky,kr]=b.spr.core,ox=Math.round(b.x-img.width/2),oy=Math.round(b.y-img.height/2),p=(Math.sin(b.t*.12)+1)/2;
+      ctx.globalCompositeOperation='lighter';
+      ring(ox+kx,oy+ky,kr+2+p*2,rgba(b.stage>=2?C.volt:C.hot,.35+.4*p));ring(ox+kx,oy+ky,kr+5+p*3,rgba(C.hot,.15+.2*p));
+      ctx.globalCompositeOperation='source-over';
+    }
   }
   for(const e of enemies)if(!(e.delay&&e.t<e.delay))drawEnemy(e,f);
 
@@ -1776,8 +1816,9 @@ const hudBtns=[$('btnPause'),$('btnBomb'),$('btnCard')];
 function show(name){for(const k in scr)scr[k].hidden=k!==name;hudBtns.forEach(b=>b.hidden=name!==null);if(name)$('toast').hidden=true;}
 const pickBtns=[...document.querySelectorAll('.pick')];
 pickBtns.forEach(b=>{
-  const P0=PLANES[b.dataset.plane],[pv,ps]=b.querySelectorAll('canvas'),g=ps.getContext('2d');
+  const P0=PLANES[b.dataset.plane],pv=b.querySelector('.pv'),ps=b.querySelector('.ps'),g=ps.getContext('2d');
   pv.getContext('2d').drawImage(P0.face,0,0);
+  b.querySelector('.pb').getContext('2d').drawImage(P0.body,0,0);
   g.drawImage(P0.a,(13-P0.a.width)>>1,0);
   b.addEventListener('click',()=>{plane=b.dataset.plane;try{localStorage.setItem(PLANE_KEY,plane);}catch(e){}startGame(1);});
 });
