@@ -52,7 +52,7 @@ const row=el('div',{className:'row'},btnLadder,btnLogout);
 const hook=el('p',{className:'hook',textContent:'로그인하면 랭킹 저장 · 친구와 대결 가능!'});
 box.append(who,btnLogin,hook,row);
 // Sits right under the start button so new players see it first.
-$('btnStart').after(box);
+$('startRow').after(box);
 
 // Nickname screen (first login only).
 const nickIn=el('input',{maxLength:10,placeholder:'에이스',autocomplete:'off'});

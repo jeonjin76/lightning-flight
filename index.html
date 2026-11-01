@@ -53,6 +53,8 @@ h2{font-size:11cqw;color:var(--volt);text-shadow:.05em .05em 0 var(--hot)}
 .ghost.gold{color:var(--volt);box-shadow:inset 0 0 0 2px var(--volt)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--ice);outline-offset:2px}
 .row{display:flex;gap:2.5cqw;flex-wrap:wrap;justify-content:center}
+.start-row{align-items:center}
+.start-row .cta{margin-block:1cqw}
 .keys{display:grid;grid-template-columns:auto auto;gap:.8cqw 3cqw;margin:0;font-size:3.7cqw;text-align:left}
 .keys dt{color:var(--ice)}
 .keys dd{margin:0;color:var(--dim)}
@@ -155,12 +157,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ice);outline-of
       <p class="eyebrow">LIGHTNING FLIGHT · 50 STAGES</p>
       <h1>번개 편대</h1>
       <p class="lede">50개 구역을 뚫고 별의 황제를 쓰러뜨리세요.</p>
-      <button id="btnStart" class="cta" type="button">출격하기</button>
+      <div id="startRow" class="row start-row">
+        <button id="btnStart" class="cta" type="button">출격하기</button>
+        <button id="btnBook" class="ghost strong" type="button">카드 도감</button>
+      </div>
       <dl class="keys">
         <dt>이동</dt><dd>방향키 · WASD · 화면 끌기</dd>
         <dt>발사</dt><dd>자동 연사 (스페이스도 OK)</dd>
-        <dt>폭탄</dt><dd>X 또는 B · 폭탄 버튼</dd>
-        <dt>카드</dt><dd>C 또는 V · 카드 버튼</dd>
+        <dt>폭탄·카드</dt><dd>X·B 폭탄 · C·V 카드 (버튼도 OK)</dd>
         <dt>멈춤</dt><dd>P 또는 Esc · 소리 M · 음악 N</dd>
       </dl>
       <ul class="items">
@@ -170,11 +174,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ice);outline-of
         <li><span class="chip c">C</span>필살 카드</li>
         <li><span class="chip l">+</span>생명</li>
       </ul>
-      <p class="hi">내 최고 점수 <b id="titleHi">0000000</b></p>
+      <p class="hi" hidden>내 최고 점수 <b id="titleHi">0000000</b></p>
       <p id="teaser" class="teaser" hidden></p>
       <p id="audioNote" class="note audio-note">화면을 한 번 누르면 소리가 켜져요.</p>
       <div class="row">
-        <button id="btnBook" class="ghost strong" type="button">카드 도감</button>
         <button id="btnRankTitle" class="ghost gold" type="button" hidden>랭킹 TOP 10</button>
         <button class="ghost snd" type="button">소리: 켬</button>
         <button class="ghost mus" type="button">음악: 켬</button>
@@ -2402,6 +2405,6 @@ initRank();
 requestAnimationFrame(t=>{last=t;loop(t);});
 })();
 </script>
-<script type="module" src="online.js?v=mvxu181l"></script>
+<script type="module" src="online.js?v=mvxu3wu8"></script>
 </body>
 </html>
