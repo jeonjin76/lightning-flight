@@ -1127,15 +1127,15 @@ const SFX={
   edrop:()=>{tone(900,.1,'sine',.07,300);},
   hit:()=>tone(1800*rand(.9,1.1),.025,'square',.022,900),
   // Aircraft breaking up: dirty blast, tearing metal, scattered debris, low rumble. No clean pitch drop (that reads as a balloon pop).
+  // Enemy breaking up: muffled blast, short metal crunch and a low thump; no bright crackle (that reads as fireworks).
   boom:()=>{
     if(!AC||muted)return;
-    const p=rand(.9,1.1),t=AC.currentTime;
-    noiseAt(t,.38,.5,3400*p,crunchBus);
-    tone(310*p,.16,'sawtooth',.07,110,0,crunchBus);tone(467*p,.13,'square',.05,150,.01,crunchBus);tone(733*p,.09,'sawtooth',.03,260,.02,crunchBus);
-    sweep(.12,.18,3200*p,1400,sfxBus,.01);
-    for(let i=0;i<5;i++)noiseAt(t+rand(.04,.28),.018,rand(.05,.11),rand(5000,9000),sfxBus,'highpass');
-    noiseAt(t+.03,.6,.22,320,sfxBus);
-    tone(72,.3,'triangle',.12,40,0);
+    const p=rand(.88,1.08),t=AC.currentTime;
+    noiseAt(t,.32,.55,700*p,crunchBus);
+    noiseAt(t,.07,.18,1800*p,sfxBus);
+    tone(140*p,.22,'sawtooth',.06,45,0,crunchBus);
+    tone(95*p,.3,'sine',.32,32,0);
+    noiseAt(t+.05,.5,.16,240,sfxBus);
   },
   big:()=>{noise(.08,.3,7000,0,'highpass');sweep(1.2,.6,1800,90,crunchBus);sweep(.9,.3,4000,200,sfxBus,.12);tone(110,1,'sine',.45,24);tone(55,1.2,'sine',.35,22,.05);},
   power:()=>[523,659,784,1046,1318].forEach((f,i)=>{tone(f,.08,'square',.06,null,i*.045);tone(f*2,.06,'triangle',.03,null,i*.045+.02);}),
@@ -1173,17 +1173,18 @@ const semi=(f,n)=>f*Math.pow(2,n/12);
 function makeTrack(o){
   const lead=[],unit=o.unit||1;let len=0;
   for(const tok of o.lead.trim().split(/\s+/)){const[n,l]=tok.split(':'),d=(+(l||1))*unit;if(n!=='-')lead.push([len,semi(n2f(n),o.leadShift||0),d]);len+=d;}
-  const slots=()=>Array.from({length:len},()=>[]),L=slots(),B=slots(),A=slots(),PAD=slots(),D=slots();
+  const slots=()=>Array.from({length:len},()=>[]),L=slots(),B=slots(),A=slots(),PAD=slots(),D=slots(),RT=[];
   for(const[s,f,d]of lead)L[s].push([f,d]);
   o.chords.forEach((c,bi)=>{
     const root=n2f(c.slice(0,-1)),tones=c.endsWith('d')?[0,3,6,12]:[0,c.endsWith('m')?3:4,7,12],s0=bi*o.bar;
     if(s0>=len)return;
+    RT[bi]={root,tones};
     PAD[s0].push([tones.slice(0,3).map(x=>semi(root,x+24)),o.bar]);
     o.bassPat.forEach((off,j)=>{if(off!=null&&s0+j<len)B[s0+j].push(semi(root,off));});
     if(o.arp)for(let j=0;j<o.bar&&s0+j<len;j++)A[s0+j].push(semi(root,tones[o.arp[j%o.arp.length]]+36));
   });
   for(let s=0;s<len;s++){const j=s%o.K.length;if(o.K[j]==='k')D[s].push('k');if(o.S[j]==='s')D[s].push('s');if(o.H[j]!=='.')D[s].push(o.H[j]);}
-  return{bpm:o.bpm,len,L,B,A,PAD,D};
+  return{bpm:o.bpm,len,bar:o.bar,L,B,A,PAD,D,RT};
 }
 const TRACKS={
   king:makeTrack({bpm:152,bar:16,unit:2,leadShift:12,
@@ -1217,6 +1218,64 @@ const TRACKS={
     chords:['D2m','A1d','D2m','A#1M','D2m','A1d'],
     bassPat:[0,0,0,12,0,0,6,0,0,0,0,12,0,0,6,6],arp:null,
     K:'k..k..k.k..k..k.',S:'....s.......s...',H:'hhohhhohhhohhhoh'}),
+  // moonlight = Beethoven, Moonlight Sonata (1801); elise = Beethoven, Fur Elise (1810); swan = Tchaikovsky, Swan Lake (1876);
+  // mozart40 = Mozart, Symphony No. 40 (1788); valkyrie = Wagner, Ride of the Valkyries (1856); paganini = Paganini, Caprice No. 24 (1817);
+  // greensleeves = traditional (16th century); habanera = Bizet, Carmen (1875); turca = Mozart, Rondo alla Turca (1783);
+  // joy = Beethoven, Ode to Joy (1824), turned into D minor.
+  moonlight:makeTrack({bpm:92,bar:16,unit:1,leadShift:12,
+    lead:'G#4:12 G#4:4 G#4:16 G#4:12 G#4:4 G#4:16 A4:12 G#4:4 F#4:8 B3:8 E4:16 -:16',
+    chords:['C#2m','C#2m','A1M','D2M','G#1M','G#1d','C#2m','C#2m'],
+    bassPat:[0,null,null,null,12,null,null,null,0,null,null,null,12,null,6,null],arp:[0,1,2,1,0,1,2,3],
+    K:'k.......k.......',S:'........s.......',H:'h...h...h...h...'}),
+  elise:makeTrack({bpm:138,bar:16,unit:1,leadShift:0,
+    lead:'E5 D#5 E5 D#5 E5 B4 D5 C5 A4:3 -:1 C4 E4 A4 B4:3 -:1 E4 G#4 B4 C5:3 -:1 E4 E5 D#5 E5 D#5 E5 B4 D5 C5 A4:3 -:1 C4 E4 A4 B4:3 -:1 E4 C5 B4 A4:4 -:11',
+    chords:['A1m','E1M','A1m','A1d'],
+    bassPat:[0,null,12,null,0,null,12,null,0,null,12,null,0,12,6,12],arp:[0,1,2,3],
+    K:'k...k...k...k...',S:'....s.......s...',H:'hhohhhohhhohhhoh'}),
+  swan:makeTrack({bpm:112,bar:16,unit:1,leadShift:12,
+    lead:'F#4:16 B3:4 C#4:4 D4:4 E4:4 F#4:6 D4:2 F#4:6 D4:2 F#4:12 B3:4 D4:4 B3:4 G3:4 D4:4 B3:16',
+    chords:['B1m','B1m','B1m','G1M','E1m','B1m'],
+    bassPat:[0,null,0,null,12,null,0,null,0,null,0,null,12,null,7,null],arp:[0,2,1,2],
+    K:'k.....k...k.....',S:'....s.......s...',H:'h.h.h.h.h.h.h.h.'}),
+  mozart40:makeTrack({bpm:150,bar:16,unit:2,leadShift:0,
+    lead:'D#5 D5 D5:2 D#5 D5 D5:2 D#5 D5 D5:2 A#5:4 A#5 A5 G5 G5:2 F5 D#5 D#5:2 D5 C5 C5:4 -:1',
+    chords:['G1m','G1m','C2m','D2M'],
+    bassPat:[0,0,12,0,0,0,12,0,0,0,12,0,0,12,6,12],arp:[0,1,2,1],
+    K:'k...k...k...k...',S:'....s.......s...',H:'hhhhhhhhhhhhhhhh'}),
+  valkyrie:makeTrack({bpm:150,bar:16,unit:1,leadShift:0,
+    lead:'F#4 B4:3 F#4 B4:2 D5:4 B4:4 D5:3 B4 D5:2 F#5:4 D5:4 F#5:3 D5 F#5:2 A5:4 A4:4 D5:12 -:9',
+    chords:['B1m','B1m','D2M','F#1d'],
+    bassPat:[0,null,0,0,null,0,0,null,0,0,null,0,12,null,12,null],arp:null,
+    K:'k..k..k..k..k.k.',S:'....s.......s...',H:'h.hh.hh.hh.hh.hh'}),
+  paganini:makeTrack({bpm:140,bar:16,unit:1,leadShift:0,
+    lead:'A4:3 A4 C5 B4 A4:2 E5:4 E4:4 A4:3 A4 C5 B4 A4:2 E5:4 E4:4 E5:3 E5 G#5 F#5 E5:2 B5:4 B4:4 '+
+         'A4:3 A4 C5 B4 A4:2 E5:4 E4:4 D5:3 D5 F5 E5 D5:2 A5:4 A4:4 G#4:3 G#4 B4 A4 G#4:2 E5:4 E4:4',
+    chords:['A1m','A1m','E1M','A1m','D2m','E1M'],
+    bassPat:[0,null,12,0,null,12,0,null,0,null,12,0,null,12,6,null],arp:[0,1,2,3],
+    K:'k...k...k...k...',S:'....s.......s.s.',H:'hhhhhhhhhhhhhhhh'}),
+  greensleeves:makeTrack({bpm:126,bar:16,unit:2,leadShift:0,
+    lead:'A4 C5:2 D5 E5 F5 E5 D5:2 B4 G4 A4 B4 C5:2 A4 A4 G#4 A4 B4:2 G#4 E4:2 '+
+         'A4 C5:2 D5 E5 F5 E5 D5:2 B4 G4 A4 B4 C5 B4 A4 G#4 F#4 G#4 A4:4 -:8',
+    chords:['A1m','G1M','A1m','E1M','A1m','G1M','E1d'],
+    bassPat:[0,null,null,12,null,null,0,null,0,null,null,12,null,null,6,null],arp:[0,1,2,1,2,1],
+    K:'k.....k.k.....k.',S:'........s.......',H:'h..h..h.h..h..h.'}),
+  habanera:makeTrack({bpm:118,bar:16,unit:1,leadShift:0,
+    lead:'D5:3 C#5 C5:2 C5:2 B4:3 A#4 A4:2 A4:2 G#4:3 G4 F4:2 F4:2 E4:2 F4:2 E4:4 '+
+         'D5:3 C#5 C5:2 C5:2 B4:3 A#4 A4:2 A4:2 G#4:3 G4 F4:2 E4:2 D4:8',
+    chords:['D2m','A1M','D2m','A1d'],
+    bassPat:[0,null,null,7,12,null,7,null,0,null,null,7,12,null,6,null],arp:null,
+    K:'k..k..k.k..k..k.',S:'....s.......s...',H:'h.h.h.h.h.h.h.h.'}),
+  turca:makeTrack({bpm:150,bar:16,unit:1,leadShift:-12,
+    lead:'B4 A4 G#4 A4 C5:4 D5 C5 B4 C5 E5:4 F5 E5 D#5 E5 B5 A5 G#5 A5 B5 A5 G#5 A5 C6:4 A5:2 C6:2 '+
+         'B5:2 A5:2 G5:2 A5:2 B5:2 A5:2 G5:2 A5:2 B5:2 A5:2 G5:2 F#5:2 E5:4',
+    chords:['A1m','A1m','A1m','E1M'],
+    bassPat:[0,12,0,12,0,12,0,12,0,12,0,12,0,12,6,12],arp:null,
+    K:'k...k...k...k...',S:'....s.......s...',H:'hhohhhohhhohhhoh'}),
+  joy:makeTrack({bpm:136,bar:16,unit:2,leadShift:0,
+    lead:'F4 F4 G4 A4 A4 G4 F4 E4 D4 D4 E4 F4 F4:3 E4 E4:4 F4 F4 G4 A4 A4 G4 F4 E4 D4 D4 E4 F4 E4:3 D4 D4:4',
+    chords:['D2m','A1d','D2m','A#1M','D2m'],
+    bassPat:[0,null,0,null,12,null,0,6,0,null,0,null,12,null,6,null],arp:[0,1,2,1],
+    K:'k...k...k...k...',S:'....s.......s...',H:'h.h.h.hhh.h.h.hh'}),
   funeral:makeTrack({bpm:104,bar:16,unit:1,leadShift:12,
     lead:'A#3:4 A#3:3 A#3 A#3:4 C#4:3 C4 C4:3 A#3 A#3:3 A3 A#3:8 '+
          'A#3:4 A#3:3 A#3 A#3:4 C#4:3 C4 C4:3 A#3 A#3:3 A3 A#3:8',
@@ -1263,16 +1322,34 @@ function drum(ch,t){
   }else if(ch==='o')noiseAt(t,.13,.05,7500,musicBus,'highpass');
   else noiseAt(t,.025,.045,8500,musicBus,'highpass');
 }
-const MUSIC={tr:null,step:0,next:0,rate:1,paused:false};
+// Choir: two detuned saws through vowel-like band-pass filters ("aah").
+function vChoir(f,t,dur){
+  const g=AC.createGain(),end=env(g,t,.25,.02,Math.max(.05,dur-.5),.4);
+  for(const[fc,q]of[[800,5],[1150,7]]){const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=fc;bp.Q.value=q;
+    osc('sawtooth',f,t,end,bp,-8);osc('sawtooth',f,t,end,bp,8);bp.connect(g);}
+  g.connect(musicDuck);g.connect(fxSend);
+}
+// Bell: inharmonic partials with a long ring, slightly out of tune for unease.
+function vBell(f,t){
+  const g=AC.createGain();g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.035,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+2.2);
+  osc('sine',f,t,t+2.2,g);osc('sine',f*2.76,t,t+1.2,g,8);osc('sine',f*5.4,t,t+.6,g,-12);
+  g.connect(musicBus);g.connect(fxSend);
+}
+// Drone: a low sine and its tritone, swelling under the bar.
+function vDrone(f,t,dur){
+  const g=AC.createGain(),end=env(g,t,.4,.07,Math.max(.05,dur-.8),.4);
+  osc('sine',f,t,end,g);osc('triangle',semi(f,6),t,end,g,5);g.connect(musicBus);
+}
+const MUSIC={tr:null,step:0,next:0,rate:1,paused:false,loop:0};
 const stepLen=()=>60/(MUSIC.tr.bpm*MUSIC.rate)/4;
 function playMusic(name,rate=1){
   const tr=TRACKS[name];MUSIC.rate=rate;
-  if(MUSIC.tr!==tr){MUSIC.tr=tr;MUSIC.step=0;MUSIC.next=AC?AC.currentTime+.08:0;}
+  if(MUSIC.tr!==tr){MUSIC.tr=tr;MUSIC.step=0;MUSIC.loop=0;MUSIC.next=AC?AC.currentTime+.08:0;}
   if(AC&&musicDelay)musicDelay.delayTime.setValueAtTime(stepLen()*3,AC.currentTime);
 }
 function stopMusic(){MUSIC.tr=null;}
 // A different track each stage, and the second half of a stage (after the mid-boss) switches again.
-const STAGE_TRACKS=['king','dies','bee','toccata','funeral'];
+const STAGE_TRACKS=['king','dies','moonlight','valkyrie','bee','toccata','elise','swan','funeral','mozart40','paganini','habanera','greensleeves','turca','joy'];
 function stageMusic(){playMusic(STAGE_TRACKS[(G.stage*2+(G.musicHalf||0))%STAGE_TRACKS.length],1+Math.min(.2,(G.stage-1)*.005));}
 function pumpMusic(){
   if(!AC||!MUSIC.tr||MUSIC.paused||AC.state!=='running')return;
@@ -1281,13 +1358,23 @@ function pumpMusic(){
   while(MUSIC.next<AC.currentTime+.15){
     const s=MUSIC.step,t=MUSIC.next;
     if(musicOn&&!muted){
-      for(const[f,d]of tr.L[s])vLead(f,t,d*dt);
+      const part=MUSIC.loop%4,bar=Math.floor(s/tr.bar),rt=tr.RT[bar];
+      // part 0 plain, 1 adds a low counter voice, 2 is a breakdown (choir, kick only), 3 is full with bells.
+      for(const[f,d]of tr.L[s]){
+        if(part===2)vChoir(f/2,t,d*dt);else vLead(f,t,d*dt);
+        if(part===1||part===3)vLead(f/2,t,d*dt*.9);
+      }
       for(const f of tr.B[s])vBass(f,t,dt*.9);
-      for(const f of tr.A[s])vArp(f,t,dt);
-      for(const[fs,d]of tr.PAD[s])vPad(fs,t,d*dt);
-      for(const ch of tr.D[s])drum(ch,t);
+      if(part!==2)for(const f of tr.A[s])vArp(f,t,dt);
+      for(const[fs,d]of tr.PAD[s]){vPad(fs,t,d*dt);if(part>=2)vChoir(fs[0],t,d*dt);}
+      for(const ch of tr.D[s])if(part!==2||(ch==='k'&&s%tr.bar===0))drum(ch,t);
+      if(rt&&s%tr.bar===0){
+        vDrone(rt.root/2,t,tr.bar*dt);
+        if(part===3||bar%4===3)vBell(semi(rt.root,rt.tones[1]+36),t);
+      }
     }
     MUSIC.step=(s+1)%tr.len;MUSIC.next+=dt;
+    if(MUSIC.step===0)MUSIC.loop++;
   }
 }
 setInterval(pumpMusic,25);
@@ -1324,6 +1411,7 @@ function startStage(n){
   const first=G.stageT===undefined||G.firstStage===n;
   G.stage=n;G.musicHalf=0;G.stageT=0;G.tl=0;G.timeline=buildStage(n,G.duel&&G.duel.seed);G.phase='intro';G.phaseT=0;
   G.limitMsg=n===LIMIT_STAGE||(n>LIMIT_STAGE&&first);
+  if(G.duel)G.limitMsg=false;
   if(G.limitMsg){toast('파워 제한 해제! 이제 탄을 6단계까지 강화할 수 있고, 다음 스테이지로 가도 파워가 그대로 유지돼요.');setTimeout(()=>sfx('oneup'),400);}
   makeBackdrop(n);
   stageMusic();
@@ -2303,8 +2391,8 @@ let overAt=0;
 function startGame(stage=1){unlockAudio();MUSIC.paused=false;newGame(stage);state='play';show(null);sfx('start');}
 /* ---------- duel mode and online hooks ---------- */
 // The online add-on (online.js, GitHub version only) drives login, ladder and duels through window.LF.
-// A duel is stage 5 with a shared seed: one life, one bomb, three minutes; it ends on death, time-out or stage clear.
-const DUEL_STAGE=5,DUEL_FRAMES=60*180;
+// A duel is stage 10 with a shared seed: one life, one bomb, three minutes; it ends on death, time-out or stage clear.
+const DUEL_STAGE=10,DUEL_FRAMES=60*180;
 function startDuel(seed,onEnd){
   unlockAudio();MUSIC.paused=false;newGame(DUEL_STAGE,{seed,onEnd});
   G.lives=1;P.power=3;P.bombs=1;state='play';show(null);sfx('start');
@@ -2477,6 +2565,6 @@ initRank();
 requestAnimationFrame(t=>{last=t;loop(t);});
 })();
 </script>
-<script type="module" src="online.js?v=mvxutr4d"></script>
+<script type="module" src="online.js?v=mvxvjdou"></script>
 </body>
 </html>

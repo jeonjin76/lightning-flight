@@ -82,7 +82,7 @@ const duelInfo=el('p',{className:'lede'});
 const btnDuelGo=el('button',{className:'cta',type:'button',textContent:'대결 시작'});
 const btnDuelNo=el('button',{className:'ghost',type:'button',textContent:'나중에 하기'});
 const scrDuel=screen('scrDuel',el('p',{className:'eyebrow',textContent:'DUEL'}),el('h2',{textContent:'대결'}),duelInfo,
-  el('p',{className:'note',textContent:'5탄에서 목숨 1개, 폭탄 1개로 3분 동안 싸워요. 시작하면 다시 할 수 없고, 중간에 나가면 그때까지 점수(0점)로 기록돼요.'}),
+  el('p',{className:'note',textContent:'10탄에서 목숨 1개, 폭탄 1개로 3분 동안 싸워요. 시작하면 다시 할 수 없고, 중간에 나가면 그때까지 점수(0점)로 기록돼요.'}),
   btnDuelGo,btnDuelNo);
 const resInfo=el('p',{className:'lede'});
 const resMsg=el('p',{className:'msg',role:'status'});
