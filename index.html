@@ -151,7 +151,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ice);outline-of
         </button>
         <button class="pick" type="button" data-plane="cat">
           <canvas class="pv" width="34" height="46"></canvas><span class="pr"><canvas class="pb" width="17" height="21"></canvas><canvas class="ps" width="13" height="13"></canvas></span>
-          <b>고양이 별빛호</b><span>프랑스 · 회색 고양이<br>춤추듯 꼬이는 별빛탄<br>가장 빠른 이동</span>
+          <b>고양이 별빛호</b><span>고양이 나라 · 냥이<br>춤추듯 꼬이는 별빛탄<br>가장 빠른 이동</span>
         </button>
       </div>
       <button id="btnSelBack" class="ghost" type="button">돌아가기</button>
@@ -447,7 +447,7 @@ const JINDO_HALF=['......w','.....wc','.....wc','....wcc','.r..wcc','rrr.www','r
 const CAT_HALF=['...l...','..lPl..','..lPPll','..lPwwc','.lPwwcc','lPPwwwc','lPPPwww','lPpPPww','.lppPPw','..l.lPP','.....lP'];
 const CPAL={l:'#7a3d9a',P:'#ff7ad9',p:'#ffd0f0',w:'#fff0fa',c:'#b48cff',y:C.volt,o:C.orange};
 const JPAL={w:'#f3f0ff',c:C.ice,r:'#ff4d6d',R:'#a8243c',b:'#3d6bff',B:'#1e3a9a',y:C.volt,o:C.orange};
-// Dog pilots wear a teal hoodie with magenta trim and an orange backpack; the cat wears a striped
+// Dog pilots wear a teal hoodie with magenta trim and an orange backpack; the cat (from the cat country) wears a striped
 // breton shirt with a red scarf and a bow on one ear. Left halves, mirrored by sym().
 // k outline, f fur, F fur shade, i inner ear, c cream muzzle, e eye, n nose, m mouth,
 // t hoodie, u hoodie light, T hoodie shade, p magenta trim, P string tip, o backpack strap, K pants, s shoe.
@@ -473,12 +473,18 @@ function withBow(c,x,y){const g=c.getContext('2d');g.fillStyle='#e83a4a';g.fillR
 const PILOT={
   shiba:{head:DOG_HEAD,blink:DOG_HEAD.map((r,i)=>i===6?'kfffkkfff':r),body:DOG_BODY,pal:{...DOG_COMMON,...DOG_PAL.shiba},bg:'#2a1a3e',flag:flagJapan,extra:null,hand:true},
   jindo:{head:DOG_HEAD,blink:DOG_HEAD.map((r,i)=>i===6?'kfffkkfff':r),body:DOG_BODY,pal:{...DOG_COMMON,...DOG_PAL.jindo},bg:'#14224a',flag:flagKorea,extra:null,hand:true},
-  cat:{head:CAT_HEAD,blink:CAT_HEAD.map((r,i)=>i===6?'kffffffff':i===7?'kfkkkffff':r),body:CAT_BODY,pal:CAT_PAL,bg:'#2a1438',flag:flagFrance,extra:c=>withBow(c,3,2),hand:false},
+  cat:{head:CAT_HEAD,blink:CAT_HEAD.map((r,i)=>i===6?'kffffffff':i===7?'kfkkkffff':r),body:CAT_BODY,pal:CAT_PAL,bg:'#2a1438',flag:flagCat,extra:c=>withBow(c,3,2),hand:false},
 };
 function pilotSprite(kind,rows){const p=PILOT[kind],c=sprite(sym(rows),p.pal);if(p.extra)p.extra(c);return c;}
 function pilotBody(kind){const p=PILOT[kind],c=pilotSprite(kind,[...p.head,...p.body]);return p.hand?withPhone(c,0,14):c;}
 function flagJapan(g,x,y){g.fillStyle='#1a1030';g.fillRect(x-1,y-1,17,12);g.fillStyle='#ffffff';g.fillRect(x,y,15,10);g.fillStyle='#d7263d';[3,5,7,7,7,5,3].forEach((w,i)=>g.fillRect(x+7-(w>>1),y+2+i,w,1));}
-function flagFrance(g,x,y){g.fillStyle='#1a1030';g.fillRect(x-1,y-1,17,12);g.fillStyle='#1e4fb0';g.fillRect(x,y,5,10);g.fillStyle='#ffffff';g.fillRect(x+5,y,5,10);g.fillStyle='#d7263d';g.fillRect(x+10,y,5,10);}
+// The cat's own country: a white flag with a cat face.
+const CAT_FLAG=['...k.......k...','...kk.....kk...','...kkkkkkkkk...','..kkkkkkkkkkk..','..kkgkkkkkgkk..','..kkgkkkkkgkk..',
+  '.WkkkkkpkkkkkW.','...kkkkkkkkk...','....kkkkkkk....','...............'];
+function flagCat(g,x,y){
+  g.fillStyle='#1a1030';g.fillRect(x-1,y-1,17,12);g.fillStyle='#ffffff';g.fillRect(x,y,15,10);
+  g.drawImage(sprite(CAT_FLAG,{k:'#4a4a62',g:'#ffc93d',p:'#ff7aa8',W:'#9aa0b8'}),x,y);
+}
 function flagKorea(g,x,y){
   g.fillStyle='#1a1030';g.fillRect(x-1,y-1,17,12);g.fillStyle='#ffffff';g.fillRect(x,y,15,10);
   const cx=x+7,cy=y+5;
@@ -2448,6 +2454,6 @@ initRank();
 requestAnimationFrame(t=>{last=t;loop(t);});
 })();
 </script>
-<script type="module" src="online.js?v=mvxui8e8"></script>
+<script type="module" src="online.js?v=mvxumvf2"></script>
 </body>
 </html>
