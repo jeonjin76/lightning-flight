@@ -876,7 +876,8 @@ for(const k in ABIL){const A=ABIL[k],c=mk(7,7),g=c.getContext('2d');g.fillStyle=
 const DRONE=sprite(sym(['..g','.gG','gGw','g.g']),{g:'#39d98a',G:'#1e8f5a',w:C.white});
 
 /* ---------- backdrop ---------- */
-const STAR_COL=['#2c3170','#7d83c2','#f3f0ff'],STAR_SPD=[.25,.6,1.3];
+// Background stays dim and slow so nothing in it can be mistaken for a bullet.
+const STAR_COL=['#2c3170','#5a5f94','#8a8fc4'],STAR_SPD=[.25,.5,.9];
 const stars=Array.from({length:90},()=>({x:Math.random()*W,y:Math.random()*H,l:Math.random()<.5?0:Math.random()<.7?1:2}));
 const PLANETS=[['#3f2a85','#2b1d5c','#1a1240','#7a4dff'],['#1d5a6e','#123a4a','#0b2430','#5ef2ff'],['#6e2a3d','#4a1d2b','#2a0f18','#ff4d6d'],['#6e5a1d','#4a3b12','#2a210a','#ffd23f']];
 let planet=null,BD=null,warpMul=1;
@@ -916,9 +917,9 @@ function rockSprite(r){
     const i=(((Math.atan2(y,x)+Math.PI)/(Math.PI*2)*8)|0)%8;
     if(Math.hypot(x,y)>r*k[i])continue;
     const lit=(-x-y)/(r*1.4);
-    g.fillStyle=lit>.35?'#8a7a6a':lit>-.2?'#5a4c42':'#332a26';g.fillRect(x+r+1,y+r+1,1,1);
+    g.fillStyle=lit>.35?'#4a4250':lit>-.2?'#2e2834':'#1c1822';g.fillRect(x+r+1,y+r+1,1,1);
   }
-  if(r>4){g.fillStyle='#2a221e';g.fillRect(r+1+((r/3)|0),r,2,2);g.fillRect(r-2,r+2,1,1);}
+  if(r>4){g.fillStyle='#141018';g.fillRect(r+1+((r/3)|0),r,2,2);g.fillRect(r-2,r+2,1,1);}
   return c;
 }
 function wallTile(acc){
@@ -935,7 +936,7 @@ function makeBackdrop(n){
   const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,st.sky[0]);grad.addColorStop(1,st.sky[1]);
   BD={type:st.bg,accent:st.accent,grad,y:0,t:0,final:st.final||n%10===0,line:rgba(st.accent,.16),glow:rgba(st.accent,.5)};
   if(st.bg==='nebula')BD.layer=nebulaLayer(st.accent);
-  if(st.bg==='asteroids')BD.rocks=[...Array(11)].map(()=>{const r=Math.random()<.3?rand(6,9)|0:rand(2,5)|0;return{c:rockSprite(r),x:rand(0,W),y:rand(-40,H),v:.25+r*.07,vx:rand(-.15,.15)};});
+  if(st.bg==='asteroids')BD.rocks=[...Array(11)].map(()=>{const r=Math.random()<.3?rand(6,9)|0:rand(2,5)|0;return{c:rockSprite(r),x:rand(0,W),y:rand(-40,H),v:.12+r*.03,vx:rand(-.08,.08)};});
   if(st.bg==='girders')BD.tile=wallTile(st.accent);
   makePlanet(st.planet);
 }
@@ -952,7 +953,7 @@ function drawSky(){
   if(planet){ctx.globalAlpha=.8;ctx.drawImage(planet.c,Math.round(planet.x),Math.round(planet.y));ctx.globalAlpha=1;}
   const streak=BD.type==='warp'||warpMul>1.5;
   for(const s of stars){
-    if(streak&&s.l>0){const len=Math.min(28,STAR_SPD[s.l]*warpMul*(BD.type==='warp'?6:3))|0;ctx.fillStyle=s.l===2?C.white:BD.accent;ctx.fillRect(s.x|0,(s.y|0)-len,1,len);}
+    if(streak&&s.l>0){const len=Math.min(28,STAR_SPD[s.l]*warpMul*(BD.type==='warp'?6:3))|0;ctx.fillStyle=s.l===2?'#c8ccf0':BD.accent;ctx.fillRect(s.x|0,(s.y|0)-len,1,len);}
     else{ctx.fillStyle=STAR_COL[s.l];ctx.fillRect(s.x|0,s.y|0,1,s.l===2?2:1);}
   }
   if(BD.type==='grid'){
@@ -962,7 +963,7 @@ function drawSky(){
     for(let y=off-24;y<H;y+=24)ctx.fillRect(0,y,W,1);
     ctx.fillStyle=BD.glow;const py=Math.floor(BD.y*1.1)%120;ctx.fillRect(0,py+100,W,1);
   }
-  if(BD.rocks)for(const r of BD.rocks)ctx.drawImage(r.c,Math.round(r.x),Math.round(r.y));
+  if(BD.rocks){ctx.globalAlpha=.6;for(const r of BD.rocks)ctx.drawImage(r.c,Math.round(r.x),Math.round(r.y));ctx.globalAlpha=1;}
   if(BD.tile){
     const off=Math.floor(BD.y)%200;
     for(let y=off-200;y<H;y+=200){
