@@ -852,8 +852,9 @@ const ABIL={
         for(const e of enemies)if(!e.dead&&!(e.delay&&e.t<e.delay)&&Math.abs(e.x-x)<e.r+4&&Math.abs(e.y-y)<e.r+4)damageEnemy(e,1);
         if(boss&&boss.state==='fight'&&Math.abs(boss.x-x)<boss.hw&&Math.abs(boss.y-y)<boss.hh)hitBoss(1);
       }}},
-  deluge:{ch:'N',col:'#9cc8ff',ko:'유성비',desc:'하늘에서 내 탄이 비처럼 쏟아져요.',cd:[130,110,90],
-    fire(lv){for(let i=0;i<5+lv*2;i++)abShot(rand(10,W-10),-6-rand(0,40),Math.PI/2,4.2,this.col);}},
+  // Rises from the bottom edge so it never looks like an enemy bullet falling from above.
+  deluge:{ch:'N',col:'#c7a0ff',ko:'별빛 분수',desc:'화면 아래에서 내 탄이 위로 솟구쳐 올라가요.',cd:[130,110,90],
+    fire(lv){for(let i=0;i<5+lv*2;i++)abShot(rand(10,W-10),H+6+rand(0,40),-Math.PI/2,4.6,this.col);}},
   cross:{ch:'M',col:'#ff7a2f',ko:'여덟 갈래 포',desc:'여덟 방향으로 탄 줄기를 한꺼번에 쏴요.',cd:[130,110,90],
     fire(lv){const o=rand(0,1);for(let i=0;i<8;i++)for(let j=0;j<=lv;j++)abShot(P.x,P.y,o+i*Math.PI/4,3.2+j*.8,this.col);}},
   feather:{ch:'S',col:'#fff6a0',ko:'날개 깃털',desc:'양옆에서 부채꼴로 깃털 탄을 쏴요.',cd:[70,58,46],
@@ -1075,8 +1076,16 @@ function sweep(dur,vol,f0,f1,dest,delay=0){
   s.connect(f);f.connect(g);g.connect(dest);s.start(t0,Math.random()*.5);s.stop(t0+dur+.05);
 }
 const SFX={
-  shot:()=>{tone(1250,.045,'square',.022,620);tone(620,.06,'triangle',.03,300);},
-  shotB:()=>{tone(520,.07,'sine',.04,980);tone(260,.06,'triangle',.025,520);},
+  // The player's own fire plays all the time, so it is kept well below every other sound.
+  shot:()=>{tone(1100,.05,'triangle',.04,700);tone(2200,.03,'sine',.012,1400);},
+  shotB:()=>{tone(520,.07,'sine',.045,980);tone(1040,.04,'triangle',.012,1600);},
+  abil:()=>{tone(880,.08,'triangle',.05,1500);tone(1320,.07,'sine',.03,2000,.03);},
+  // Enemy fire: each bullet look has its own sound (throttled so big volleys stay readable).
+  eorb:()=>{tone(700,.09,'square',.05,240);},
+  ediamond:()=>{tone(1500,.06,'square',.04,700);tone(750,.06,'triangle',.03,380);},
+  ebig:()=>{tone(150,.16,'sawtooth',.08,60);noise(.08,.12,700);},
+  eneedle:()=>{tone(2400,.05,'sawtooth',.03,1200);noise(.04,.06,6000,0,'highpass');},
+  edrop:()=>{tone(900,.1,'sine',.07,300);},
   hit:()=>tone(1800*rand(.9,1.1),.025,'square',.022,900),
   // Aircraft breaking up: dirty blast, tearing metal, scattered debris, low rumble. No clean pitch drop (that reads as a balloon pop).
   boom:()=>{
@@ -1283,7 +1292,7 @@ function addEnemy(type,x,y,move,o={}){
 }
 function angTo(x,y){return Math.atan2(P.y-y,P.x-x);}
 // BST is the look of the bullet being fired; it is set to the shooter's style before its move code runs.
-function fireA(x,y,a,s){const b={x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,k:BST,r2:BST==='big'?14:9};eBul.push(b);return b;}
+function fireA(x,y,a,s){const b={x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,k:BST,r2:BST==='big'?14:9};eBul.push(b);sfx('e'+BST,90);return b;}
 const live=e=>!P.dead&&e.y>0&&e.y<H*.62;
 function aimed(e){
   if(!live(e))return;
@@ -1668,7 +1677,7 @@ function updateAbilities(){
   for(const k in P.abil){
     const A=ABIL[k],lv=P.abil[k];
     if(A.tick)A.tick(lv);
-    else if(--P.abT[k]<=0){P.abT[k]=A.cd[lv-1];A.fire(lv);}
+    else if(--P.abT[k]<=0){P.abT[k]=A.cd[lv-1];A.fire(lv);sfx('abil',120);}
   }
   for(const bm of P.beams){
     bm.t--;
@@ -1836,8 +1845,8 @@ function update(){
     if(b.fuse&&(--b.fuse<=0||b.dead)){b.dead=true;mineBoom(b);}
     else if(b.home&&G.frame%3===0)parts.push({x:b.x,y:b.y,vx:0,vy:0,life:8,col:C.orange,sz:1});
   }
-  // Power shots may start above the screen (the rain power) and live for a limited time.
-  pBul=pBul.filter(b=>!b.dead&&(!b.ab||--b.life>0)&&b.y>(b.ab?-60:-10)&&b.y<H+10&&b.x>-10&&b.x<W+10);
+  // Power shots may start below the screen (the fountain power) and live for a limited time.
+  pBul=pBul.filter(b=>!b.dead&&(!b.ab||--b.life>0)&&b.y>-10&&b.y<(b.ab?H+60:H+10)&&b.x>-10&&b.x<W+10);
 
   const vulnerable=!P.dead&&P.inv<=0;
   const sl=G.slowT>0?.35:1;
@@ -1990,7 +1999,11 @@ function render(){
   for(const b of pBul)if(b.ab){
     const x=Math.round(b.x),y=Math.round(b.y);
     if(b.fuse){ctx.fillStyle=(f>>1)&1?C.hot:b.ab;ctx.fillRect(x-2,y-2,4,4);ctx.fillStyle=C.white;ctx.fillRect(x-1,y-1,2,2);}
-    else{ctx.fillStyle=b.ab;ctx.fillRect(x-1,y-1,3,3);ctx.fillStyle=C.white;ctx.fillRect(x,y,1,1);}
+    else{
+      const sp=Math.hypot(b.vx,b.vy)||1,ux=b.vx/sp,uy=b.vy/sp;
+      for(let i=4;i>0;i--){ctx.fillStyle=rgba(b.ab,.75-i*.15);ctx.fillRect(Math.round(b.x-ux*i*1.6),Math.round(b.y-uy*i*1.6),2,2);}
+      ctx.fillStyle=b.ab;ctx.fillRect(x-1,y-1,3,3);ctx.fillStyle=C.white;ctx.fillRect(x,y,1,1);
+    }
   }
   for(const[x,y]of P.orbs){if(P.dead)break;discOn(ctx,Math.round(x),Math.round(y),3,'#1aa6c4');discOn(ctx,Math.round(x),Math.round(y),2,C.ice);ctx.fillStyle=C.white;ctx.fillRect(Math.round(x)-1,Math.round(y)-1,1,1);}
   if(P.dead===0)for(const dr of P.drones)draw(DRONE,dr.x,dr.y);
