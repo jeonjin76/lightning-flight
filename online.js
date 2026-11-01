@@ -32,6 +32,10 @@ css.textContent=`
 .duels{list-style:none;margin:0;padding:0;width:100%;display:flex;flex-direction:column;gap:1cqw}
 .duels li{display:flex;align-items:center;justify-content:space-between;gap:2cqw;padding:1.4cqw 2.4cqw;background:var(--field);box-shadow:inset 0 0 0 1px var(--line);font-size:3.6cqw;text-align:left}
 .duels li.win{box-shadow:inset 0 0 0 2px var(--ice)}.duels li.lose{box-shadow:inset 0 0 0 2px var(--hot)}
+.hook{margin:0;font-size:3.8cqw;color:var(--volt);animation:lfpulse 1.4s ease-in-out infinite}
+@keyframes lfpulse{50%{opacity:.5}}
+@media (prefers-reduced-motion:reduce){.hook{animation:none}}
+.online .ghost.strong{font-size:4.6cqw;padding:1.6cqw 5cqw}
 .sub{margin:1cqw 0 0;font-family:var(--font-display);font-weight:400;font-size:5.4cqw;color:var(--volt)}
 `;
 document.head.append(css);
@@ -45,8 +49,10 @@ const btnLogin=el('button',{className:'ghost strong',type:'button',textContent:'
 const btnLadder=el('button',{className:'ghost gold',type:'button',textContent:'대결 랭킹'});
 const btnLogout=el('button',{className:'ghost',type:'button',textContent:'로그아웃'});
 const row=el('div',{className:'row'},btnLadder,btnLogout);
-box.append(who,btnLogin,row);
-$('scrTitle').insertBefore(box,$('scrTitle').querySelector('.row'));
+const hook=el('p',{className:'hook',textContent:'로그인하면 랭킹 저장 · 친구와 대결 가능!'});
+box.append(who,btnLogin,hook,row);
+// Sits right under the start button so new players see it first.
+$('btnStart').after(box);
 
 // Nickname screen (first login only).
 const nickIn=el('input',{maxLength:10,placeholder:'에이스',autocomplete:'off'});
@@ -86,7 +92,7 @@ for(const[k,s]of[['nick',scrNick],['ladder',scrLadder],['duel',scrDuel],['duelEn
 
 /* ---------- auth and profile ---------- */
 function refreshTitle(){
-  btnLogin.hidden=!!user;row.hidden=!me;who.hidden=!me;
+  btnLogin.hidden=hook.hidden=!!user;row.hidden=!me;who.hidden=!me;
   if(me){const n=pendingForMe().length;who.textContent=me.nick+' 님 · 대결 최고 점수 '+(me.best||0).toLocaleString('ko-KR');btnLadder.textContent='대결 랭킹'+(n?' ('+n+')':'');}
 }
 btnLogin.addEventListener('click',async()=>{
