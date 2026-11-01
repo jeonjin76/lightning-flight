@@ -460,20 +460,20 @@ const DOG_PAL={
   jindo:{k:'#5a4a3a',f:'#f2ead8',F:'#d8ccb4',i:'#ffc2c8',c:'#ffffff'},
 };
 const DOG_COMMON={e:'#1a1030',n:'#1a1030',m:'#3a2418',t:'#1f7f86',u:'#2aa9a8',T:'#155a62',p:'#e040c0',P:'#ff9be6',o:'#ef6a2a',K:'#1a1626',s:'#3a2a2a'};
-// Cat: h blush, g gold eye, w eye shine / white stripe, p pink nose, W whisker, r scarf, R scarf shade, b navy stripe, N shorts.
-const CAT_HEAD=['.k.......','.kk......','.kik.....','kiikkkkkk','kffffffff','kffffffff','kfwgeffff',
-  'kfgggffff','Wfhhfccpp','kWfcccccm','.kkcccmcc'];
-const CAT_BODY=['..krrrrrr','.kwwwwrRr','fbbbbbbRb','fwwwwwwww','fbbbbbbbb','.wwwwwwww','.bbbbbbbb',
-  '...NNNN..','...NNNN..','..ffff...'];
-const CAT_PAL={h:'#ff9ec4',k:'#3a3550',f:'#a8b0c8',i:'#ffb0c8',c:'#eef0f6',w:'#ffffff',g:'#ffc93d',e:'#1a1030',p:'#ff7aa8',
-  m:'#3a3550',W:'#eef0f6',r:'#e83a4a',R:'#a01828',b:'#2a3a7a',N:'#1a2048'};
+// Cat: kept to big flat shapes so it stays clean when drawn 2x. h blush, e big eye, w eye shine, p nose, m mouth,
+// r scarf, R scarf shade, b shirt, N shorts.
+const CAT_HEAD=['..k......','..kk.....','..kik....','..kiik...','.kffffkkk','kffffffff','kffffffff',
+  'kffeeffff','kffewffff','kffeeffff','khhffffpp','.kfffffmf','..kkkkkkk'];
+const CAT_BODY=['...krrrrr','..kbbbrRb','.kbbbbbRb','fkbbbbbbb','f.bbbbbbb','..bbbbbbb','...NNNN..','..ffff...'];
+const CAT_PAL={h:'#ffa8cc',k:'#4a4466',f:'#c4cadc',i:'#ffb0c8',w:'#ffffff',e:'#2a1a3a',p:'#ff7aa8',m:'#4a4466',
+  r:'#e83a4a',R:'#a01828',b:'#7a8ae8',N:'#2a3070'};
 // Phone in the left hand / bow on the left ear, drawn after mirroring so only one side has it.
 function withPhone(c,x,y){const g=c.getContext('2d');g.fillStyle='#1a1030';g.fillRect(x,y,3,4);g.fillStyle=C.ice;g.fillRect(x+1,y+1,1,2);return c;}
 function withBow(c,x,y){const g=c.getContext('2d');g.fillStyle='#e83a4a';g.fillRect(x,y,1,3);g.fillRect(x+1,y+1,1,1);g.fillRect(x+2,y,1,3);g.fillStyle='#ff9bb0';g.fillRect(x,y,1,1);g.fillRect(x+2,y,1,1);return c;}
 const PILOT={
   shiba:{head:DOG_HEAD,blink:DOG_HEAD.map((r,i)=>i===6?'kfffkkfff':r),body:DOG_BODY,pal:{...DOG_COMMON,...DOG_PAL.shiba},bg:'#2a1a3e',flag:flagJapan,extra:null,hand:true},
   jindo:{head:DOG_HEAD,blink:DOG_HEAD.map((r,i)=>i===6?'kfffkkfff':r),body:DOG_BODY,pal:{...DOG_COMMON,...DOG_PAL.jindo},bg:'#14224a',flag:flagKorea,extra:null,hand:true},
-  cat:{head:CAT_HEAD,blink:CAT_HEAD.map((r,i)=>i===6?'kffffffff':i===7?'kfkkkffff':r),body:CAT_BODY,pal:CAT_PAL,bg:'#2a1438',flag:flagCat,extra:c=>withBow(c,3,2),hand:false},
+  cat:{head:CAT_HEAD,blink:CAT_HEAD.map((r,i)=>i===7||i===9?'kffffffff':i===8?'kffeeffff':r),body:CAT_BODY,pal:CAT_PAL,bg:'#2a1438',flag:flagCat,extra:c=>withBow(c,4,4),hand:false},
 };
 function pilotSprite(kind,rows){const p=PILOT[kind],c=sprite(sym(rows),p.pal);if(p.extra)p.extra(c);return c;}
 function pilotBody(kind){const p=PILOT[kind],c=pilotSprite(kind,[...p.head,...p.body]);return p.hand?withPhone(c,0,14):c;}
@@ -506,7 +506,7 @@ function portrait(kind,blink){
   g.fillStyle='#ffd23f';g.fillRect(0,0,34,46);g.fillStyle=p.bg;g.fillRect(1,1,32,32);
   g.fillStyle='rgba(255,255,255,.08)';g.fillRect(1,1,32,10);
   g.save();g.beginPath();g.rect(1,1,32,32);g.clip();g.imageSmoothingEnabled=false;
-  g.drawImage(pilotSprite(kind,[...(blink?p.blink:p.head),...p.body.slice(0,5)]),0,2,34,32);g.restore();
+  g.drawImage(pilotSprite(kind,[...(blink?p.blink:p.head),...p.body.slice(0,16-p.head.length)]),0,2,34,32);g.restore();
   g.fillStyle='#10132e';g.fillRect(1,33,32,12);
   p.flag(g,9,34);
   return c;
@@ -1163,7 +1163,9 @@ function sfx(name,gap=0){const now=performance.now();if(gap&&lastS[name]&&now-la
 
 /* ---------- music: public-domain classics re-arranged as driving synthwave ---------- */
 // king = Grieg, In the Hall of the Mountain King (1875); bee = Rimsky-Korsakov, Flight of the Bumblebee (1900);
-// boss = Beethoven, Symphony No. 5 opening motif (1808). Every note is synthesized here; no recordings are used.
+// boss = Beethoven, Symphony No. 5 opening motif (1808); toccata = Bach, Toccata and Fugue in D minor (c.1704);
+// dies = Dies irae chant (13th century); funeral = Chopin, Funeral March from Piano Sonata No. 2 (1839).
+// Chords marked d are diminished (minor third + tritone) for a darker sound. Every note is synthesized here; no recordings are used.
 const NOTE_I={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 function n2f(s){const m=/^([A-G])(#?)(\d)$/.exec(s);return 440*Math.pow(2,(NOTE_I[m[1]]+(m[2]?1:0)+(+m[3]+1)*12-69)/12);}
 const semi=(f,n)=>f*Math.pow(2,n/12);
@@ -1174,7 +1176,7 @@ function makeTrack(o){
   const slots=()=>Array.from({length:len},()=>[]),L=slots(),B=slots(),A=slots(),PAD=slots(),D=slots();
   for(const[s,f,d]of lead)L[s].push([f,d]);
   o.chords.forEach((c,bi)=>{
-    const root=n2f(c.slice(0,-1)),tones=[0,c.endsWith('m')?3:4,7,12],s0=bi*o.bar;
+    const root=n2f(c.slice(0,-1)),tones=c.endsWith('d')?[0,3,6,12]:[0,c.endsWith('m')?3:4,7,12],s0=bi*o.bar;
     if(s0>=len)return;
     PAD[s0].push([tones.slice(0,3).map(x=>semi(root,x+24)),o.bar]);
     o.bassPat.forEach((off,j)=>{if(off!=null&&s0+j<len)B[s0+j].push(semi(root,off));});
@@ -1202,13 +1204,32 @@ const TRACKS={
     chords:['C2m','G1M','C2m','G#1M','C2m','G#1M','G1M','C2m'],
     bassPat:[0,0,12,0,0,0,12,0,0,0,12,0,7,7,12,12],arp:[0,1,2,1],
     K:'k..kk...k..kk.k.',S:'....s.......s.s.',H:'hhhhhhhhhhhhhhhh'}),
+  toccata:makeTrack({bpm:128,bar:16,unit:1,leadShift:0,
+    lead:'A5 G5 A5:6 -:2 G5 F5 E5 D5 C#5:4 D5:6 -:2 A4 G4 A4:6 -:2 E4:2 F4:2 C#4:2 D4:6 -:2 '+
+         'A3 G3 A3:6 -:2 G3 F3 E3 D3 C#3:4 D3:8 '+
+         'D4 E4 F4 G4 A4 A#4 C#5 D5 E5 F5 E5 D5 C#5 A#4 A4 G4 D4 E4 F4 G4 A4 A#4 C#5 D5 E5 F5 E5 D5 C#5 A#4 A4 G4 -:4',
+    chords:['D2m','A1d','D2m','D2m','A#1M','A1d','D2m'],
+    bassPat:[0,null,0,null,12,null,0,null,0,null,0,null,12,null,6,null],arp:[0,1,2,3],
+    K:'k.......k.......',S:'....s.......s...',H:'h.o.h.o.h.o.h.oh'}),
+  dies:makeTrack({bpm:132,bar:16,unit:2,leadShift:0,
+    lead:'F4 E4 F4 D4 E4 C4 D4:2 D4:2 F4 F4 G4 F4 E4 D4 C4 E4 F4 E4 D4:2 D4:2 '+
+         'F5 E5 F5 D5 E5 C5 D5:2 D5:2 F5 F5 G5 F5 E5 D5 C5 E5 F5 E5 D5:2 D5:2',
+    chords:['D2m','A1d','D2m','A#1M','D2m','A1d'],
+    bassPat:[0,0,0,12,0,0,6,0,0,0,0,12,0,0,6,6],arp:null,
+    K:'k..k..k.k..k..k.',S:'....s.......s...',H:'hhohhhohhhohhhoh'}),
+  funeral:makeTrack({bpm:104,bar:16,unit:1,leadShift:12,
+    lead:'A#3:4 A#3:3 A#3 A#3:4 C#4:3 C4 C4:3 A#3 A#3:3 A3 A#3:8 '+
+         'A#3:4 A#3:3 A#3 A#3:4 C#4:3 C4 C4:3 A#3 A#3:3 A3 A#3:8',
+    chords:['A#1m','F1d','A#1m','F1d'],
+    bassPat:[0,null,0,0,null,null,0,null,0,null,0,0,6,null,0,null],arp:[0,2,1,2],
+    K:'k...k.k.k...k.k.',S:'....s.......s...',H:'h.h.h.h.h.h.h.h.'}),
 };
 function env(g,t,a,peak,hold,rel){g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setValueAtTime(peak,t+a+hold);g.gain.exponentialRampToValueAtTime(.0001,t+a+hold+rel);return t+a+hold+rel;}
 function osc(type,f,t,end,dest,detune=0){const o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t);o.detune.value=detune;o.connect(dest);o.start(t);o.stop(end+.05);}
 function lowpass(f0,f1,t,dur,q=1){const lp=AC.createBiquadFilter();lp.type='lowpass';lp.Q.value=q;lp.frequency.setValueAtTime(f0,t);lp.frequency.exponentialRampToValueAtTime(f1,t+dur);return lp;}
 // Lead: two detuned saws plus a sub-octave square, filtered, sent to echo and reverb.
 function vLead(f,t,dur){
-  const g=AC.createGain(),lp=lowpass(3600,1300,t,dur,3),end=env(g,t,.008,.05,Math.max(.01,dur-.06),.1);
+  const g=AC.createGain(),lp=lowpass(2800,1100,t,dur,4),end=env(g,t,.008,.05,Math.max(.01,dur-.06),.1);
   osc('sawtooth',f,t,end,lp,-10);osc('sawtooth',f,t,end,lp,10);osc('square',f/2,t,end,lp);
   lp.connect(g);g.connect(musicBus);g.connect(fxSend);
 }
@@ -1250,7 +1271,9 @@ function playMusic(name,rate=1){
   if(AC&&musicDelay)musicDelay.delayTime.setValueAtTime(stepLen()*3,AC.currentTime);
 }
 function stopMusic(){MUSIC.tr=null;}
-function stageMusic(){playMusic(G.stage%2?'king':'bee',1+Math.min(.2,(G.stage-1)*.005));}
+// A different track each stage, and the second half of a stage (after the mid-boss) switches again.
+const STAGE_TRACKS=['king','dies','bee','toccata','funeral'];
+function stageMusic(){playMusic(STAGE_TRACKS[(G.stage*2+(G.musicHalf||0))%STAGE_TRACKS.length],1+Math.min(.2,(G.stage-1)*.005));}
 function pumpMusic(){
   if(!AC||!MUSIC.tr||MUSIC.paused||AC.state!=='running')return;
   const tr=MUSIC.tr,dt=stepLen();
@@ -1299,7 +1322,7 @@ const LIMIT_STAGE=10;
 const maxPow=()=>G.stage>=LIMIT_STAGE?6:5;
 function startStage(n){
   const first=G.stageT===undefined||G.firstStage===n;
-  G.stage=n;G.stageT=0;G.tl=0;G.timeline=buildStage(n,G.duel&&G.duel.seed);G.phase='intro';G.phaseT=0;
+  G.stage=n;G.musicHalf=0;G.stageT=0;G.tl=0;G.timeline=buildStage(n,G.duel&&G.duel.seed);G.phase='intro';G.phaseT=0;
   G.limitMsg=n===LIMIT_STAGE||(n>LIMIT_STAGE&&first);
   if(G.limitMsg){toast('파워 제한 해제! 이제 탄을 6단계까지 강화할 수 있고, 다음 스테이지로 가도 파워가 그대로 유지돼요.');setTimeout(()=>sfx('oneup'),400);}
   makeBackdrop(n);
@@ -1647,7 +1670,7 @@ function updateBoss(){
       if(Math.random()<(b.mid?.6:.3)){items.push({type:'C',x:b.x-10,y:b.y,t:0,mag:true});pop(b.x,b.y+14,'CARD!',C.ice);}
       // Unique foes always leave a life and open the collection screen.
       if(b.uq){if(!G.duel)items.push({type:'L',x:b.x+10,y:b.y+6,t:0,mag:true});G.collectQ={id:b.uq,name:b.def.name};}
-      if(b.mid){dropItem(b.x+10,b.y);G.phase='waves';G.phaseT=200;stageMusic();}
+      if(b.mid){dropItem(b.x+10,b.y);G.phase='waves';G.phaseT=200;G.musicHalf=1;stageMusic();}
       else{G.phase='clear';G.phaseT=0;stopMusic();}
     }
     return;
@@ -1875,10 +1898,10 @@ function update(){
     if(G.phase==='intro'&&G.phaseT>150)G.phase='waves';
   }else if(G.phase==='midwarn'){
     if(G.phaseT===1){sfx('warn');stopMusic();}
-    if(G.phaseT>=100){spawnBoss(true);G.phase='mid';G.phaseT=0;playMusic('boss');}
+    if(G.phaseT>=100){spawnBoss(true);G.phase='mid';G.phaseT=0;playMusic(boss.uq?'toccata':'boss',boss.uq?1.1:1);}
   }else if(G.phase==='warning'){
     if(G.phaseT===1){sfx('warn');stopMusic();}
-    if(G.phaseT>=210){spawnBoss();G.phase='boss';G.phaseT=0;playMusic('boss',G.stage%10===0?1.12:1.04);}
+    if(G.phaseT>=210){spawnBoss();G.phase='boss';G.phaseT=0;if(boss.uq)playMusic('dies',1.2);else playMusic('boss',1.04);}
   }else if(G.phase==='clear'){
     if(G.phaseT===40)sfx(G.stage===LAST?'ending':'clear');
     if(G.duel&&G.phaseT>=120){endDuel('clear');return;}
@@ -2454,6 +2477,6 @@ initRank();
 requestAnimationFrame(t=>{last=t;loop(t);});
 })();
 </script>
-<script type="module" src="online.js?v=mvxumvf2"></script>
+<script type="module" src="online.js?v=mvxutr4d"></script>
 </body>
 </html>
